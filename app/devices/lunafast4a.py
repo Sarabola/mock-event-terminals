@@ -5,27 +5,13 @@ from random import choice, randint
 
 import requests
 
-from app.config import project_settings, get_logger
-from app.db import db_helper
+from app.devices.abc import DeviceSender
 
 
-class LunaFast4ASender:
+class LunaFast4ASender(DeviceSender):
     _DEVICE_NAME = "lunafast4a"
-    _IMAGES_PATH = project_settings.images_path
-
-    _ENDPOINT_TEMPLATE = "vl-access/webhook/device/{component_id}/event/handle_event"
-    _URL_TEMPLATE = "http://{host}:{port}/"
     HIK_FACE_BODY_TEMPLATE = 'Picture--MIME_boundary\r\n\r\n{body}\r\n\r\n--MIME_boundary\r\n\r\n'
     HIK_CARD_BODY_TEMPLATE = '--MIME_boundary\r\n\r\n{body}--MIME_boundary\r\n\r\n'
-
-    def __init__(self):
-        self.host = db_helper.get_host()
-        self.port = db_helper.get_port()
-        self.device_id = db_helper.get_device_id_by_name(self._DEVICE_NAME)
-        self.logger = get_logger(self.__class__.__name__)
-
-        self._URL = (self._URL_TEMPLATE.format(host=self.host, port=self.port) +
-                     self._ENDPOINT_TEMPLATE.format(component_id=self.device_id))
 
     @staticmethod
     def get_current_datetime_string():
@@ -110,14 +96,13 @@ class LunaFast4ASender:
         self.logger.info("Sending successfully end.")
         return result
 
-    def make_face_request_with_temperature(self, face: bytes):
+    def make_face_request_with_temperature(self, face: bytes) -> int:
         """Send face request with temperature data."""
         face_body = self.get_face_body_with_temperature()
         face_body = json.dumps(face_body)
         template_data = self.HIK_FACE_BODY_TEMPLATE.format(body=face_body)
         face_data = template_data.encode() + face
-        response = requests.request(method='POST', url=self._URL, data=face_data)
-        return response.status_code
+        return self.make_request(body=face_data)
 
     def make_face_request(self, face: bytes):
         """Send face request without temperature."""
@@ -126,13 +111,17 @@ class LunaFast4ASender:
         face_body = json.dumps(face_body)
         template_data = self.HIK_FACE_BODY_TEMPLATE.format(body=face_body)
         face_data = template_data.encode() + face
-        response = requests.request(method='POST', url=self._URL, data=face_data)
-        return response.status_code
+        return self.make_request(body=face_data)
 
     def make_card_request(self, card: str = "456784"):
         """Send card request."""
         body = self.get_card_body(card=card)
         body = json.dumps(body)
         data = self.HIK_CARD_BODY_TEMPLATE.format(body=body).encode()
-        response = requests.request(method='POST', url=self._URL, data=data)
+        return self.make_request(body=data)
+
+    def make_request(self, body: dict | bytes) -> int:
+        response = requests.request(method='POST', url=self._URL, data=body)
+        if response.status_code != 200:
+            self.logger.warning(f"Failed request! Error: {response.text}.")
         return response.status_code
