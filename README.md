@@ -5,7 +5,13 @@ ssh: git clone git@github.com:Sarabola/mock-event-terminals.git
 https: git clone https://github.com/Sarabola/mock-event-terminals.git
 ```
 
-## 2. Активация виртуального окружения и установка зависимостей
+## 2. Создаем папку images рядом с app
+```bash
+mkdir images
+```
+В эту папку можно загружать все изображения которые вы хотите отправлять (формат .jpg)
+
+## 3. Активация виртуального окружения и установка зависимостей
 Linux:
 ```bash
 python -m venv .venv
@@ -20,7 +26,7 @@ python -m venv .venv
 pip install -r "requirements.txt"
 ```
 
-## 3. Запуск программы
+## 4. Запуск программы
 ```bash
 pythom -m app.main
 ```
