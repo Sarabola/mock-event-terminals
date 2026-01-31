@@ -1,7 +1,7 @@
 import json
 import tkinter as tk
 
-from windows.main_window import MainWindow
+from app.windows.main_window import MainWindow
 
 from app.config import project_settings
 from app.theme import apply_theme_to_root
