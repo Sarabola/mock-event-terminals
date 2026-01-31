@@ -10,19 +10,26 @@
     "lunafast4a": {
       "device_id": "",
       "temperature_enabled": false,
-      "card_event": false
+      "card_event": false,
+      "above_normal_temp": false,
+      "abnormal_temp": false,
+      "old_event": false
     },
     "r20": {
-      "device_id": "poiuygbnm,lkhbnsad"
+      "device_id": "5f791379-9d4f-4891-bf85-b933e08d6b42"
     },
     "beward": {
-      "device_id": ""
+      "device_id": "",
+      "enable_temp": false,
+      "above_normal_temp": false,
+      "abnormal_temp": false,
+      "old_event": false
     }
   },
   "images": {
     "face_only_for_autotests.jpg": true,
-    "max.jpg": false,
-    "multiple_faces.jpg": false,
+    "max.jpg": true,
+    "multiple_faces.jpg": true,
     "unknow_face.jpg": false
   }
 }

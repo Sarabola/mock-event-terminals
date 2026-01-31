@@ -1,5 +1,6 @@
 from app.windows.abc import DeviceWindow, Window
 from app.windows.devices.settings_window import DeviceSettingsWindow
+from app.windows.devices.settings_with_temperature import DeviceWithTemperatureSettingsWindow
 from app.windows.select_photo import SelectPhotosWindow
 from app.windows.send_status_window import SendStatusWindow
 from app.devices.lunafast4a import LunaFast4ASender
@@ -44,7 +45,7 @@ class LunaFast4AWindow(DeviceWindow, Window):
 
     def open_settings(self):
         self._clear_window()
-        devices_window = DeviceSettingsWindow(self.master, self, self.TERMINAL_NAME)
+        devices_window = DeviceWithTemperatureSettingsWindow(self.master, self, self.TERMINAL_NAME)
         devices_window.show_settings()
 
     def select_photos(self):
@@ -65,74 +66,6 @@ class LunaFast4AWindow(DeviceWindow, Window):
             )
 
         status_window.show_status(send_photos_callback)
-
-    def show(self):
-        self._clear_window()
-        self.master.configure(bg=COLORS["bg_primary"])
-
-        main_frame = tk.Frame(self.master, bg=COLORS["bg_primary"])
-        main_frame.pack(expand=True, fill="both", padx=40, pady=40)
-
-        title_label = tk.Label(
-            main_frame, 
-            text="Luna Fast 4A", 
-            **STYLES["title_label"]
-        )
-        title_label.pack(pady=(0, 30))
-
-        buttons_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
-        buttons_container.pack(expand=True, fill="x")
-
-        send_button = tk.Button(
-            buttons_container, 
-            text="Send photos", 
-            command=self.send_event,
-            **STYLES["button"]
-        )
-        send_button.pack(pady=8, fill="x", ipadx=20)
-        settings_button = tk.Button(
-            buttons_container, 
-            text="Settings", 
-            command=self.open_settings,
-            **STYLES["button"]
-        )
-        settings_button.pack(pady=8, fill="x", ipadx=20)
-
-        select_button = tk.Button(
-            buttons_container, 
-            text="Select photos", 
-            command=self.select_photos,
-            **STYLES["button"]
-        )
-        select_button.pack(pady=8, fill="x", ipadx=20)
-
-        settings_frame = tk.Frame(main_frame, bg=COLORS["bg_secondary"])
-        settings_frame.pack(fill="x", pady=20, padx=10)
-
-        temp_checkbox = tk.Checkbutton(
-            settings_frame,
-            text="Enable Temperature Detection",
-            variable=self.temperature_enabled,
-            **STYLES["checkbutton"]
-        )
-        temp_checkbox.pack(pady=10, anchor="w", padx=10)
-
-        card_checkbox = tk.Checkbutton(
-            settings_frame,
-            text="Send Card Events Instead of Face",
-            variable=self.card_event,
-            **STYLES["checkbutton"]
-        )
-        card_checkbox.pack(pady=10, anchor="w", padx=10)
-
-        back_button = tk.Button(
-            buttons_container, 
-            text="Back", 
-            command=self.go_back,
-            **STYLES["button"]
-        )
-        back_button.pack(pady=8, fill="x", ipadx=20)
-        self._create_photos_preview(main_frame)
 
     def _create_photos_preview(self, parent_frame):
         """Create a frame to display selected photos that will be sent."""
