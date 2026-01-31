@@ -1,12 +1,14 @@
 import tkinter as tk
+from app.theme import apply_theme_to_root, COLORS
 from windows.main_window import MainWindow
 
 class TerminalEmulatorApp:
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title()
-        self.root.geometry("600x400")
+        self.root.title("Terminal Emulator")
+        self.root.geometry("700x500")
         self.root.resizable(False, False)
+        apply_theme_to_root(root)
         self._create_main_window()
 
     def _create_main_window(self):

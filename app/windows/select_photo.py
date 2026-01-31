@@ -3,6 +3,7 @@ import json
 from app.config import project_settings
 from app.db import db_helper
 from app.windows.abc import Window, DeviceWindow
+from app.theme import COLORS, STYLES
 import tkinter as tk
 from tkinter import messagebox
 
@@ -17,10 +18,33 @@ class SelectPhotosWindow(Window):
 
     def get_images_statuses(self):
         self._clear_window()
-        
-        title_label = tk.Label(self.master, text="Select Photos", font=("Arial", 14, "bold"))
-        title_label.pack(pady=10)
+        self.master.configure(bg=COLORS["bg_primary"])
 
+        main_frame = tk.Frame(self.master, bg=COLORS["bg_primary"])
+        main_frame.pack(expand=True, fill="both", padx=40, pady=40)
+
+        title_label = tk.Label(
+            main_frame, 
+            text="Select Photos", 
+            **STYLES["title_label"]
+        )
+        title_label.pack(pady=(0, 30))
+
+        content_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
+        content_container.pack(expand=True, fill="both")
+
+        canvas = tk.Canvas(content_container, bg=COLORS["bg_primary"], highlightthickness=0)
+        scrollbar = tk.Scrollbar(content_container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=COLORS["bg_primary"])
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
         images_data = db_helper.get_images_data()
         self.image_vars = {}
         
@@ -28,16 +52,38 @@ class SelectPhotosWindow(Window):
             var = tk.BooleanVar(value=status)
             self.image_vars[image_name] = var
             
-            frame = tk.Frame(self.master)
-            frame.pack(anchor=tk.W, pady=5, padx=20)
+            frame = tk.Frame(scrollable_frame, bg=COLORS["bg_primary"])
+            frame.pack(anchor=tk.W, pady=5, padx=20, fill="x")
             
-            checkbox = tk.Checkbutton(frame, text=image_name, variable=var)
+            checkbox = tk.Checkbutton(
+                frame, 
+                text=image_name, 
+                variable=var,
+                **STYLES["checkbutton"]
+            )
             checkbox.pack(side=tk.LEFT)
         
-        back_button = tk.Button(self.master, text="Back", command=self.go_back)
-        back_button.pack(pady=20)
-        save_button = tk.Button(self.master, text="Save", command=self.save_variable)
-        save_button.pack()
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        button_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
+        button_container.pack(pady=20)
+        
+        back_button = tk.Button(
+            button_container, 
+            text="Back", 
+            command=self.go_back,
+            **STYLES["button"]
+        )
+        back_button.pack(pady=8, fill="x", ipadx=20)
+        
+        save_button = tk.Button(
+            button_container, 
+            text="Save", 
+            command=self.save_variable,
+            **STYLES["button"]
+        )
+        save_button.pack(pady=8, fill="x", ipadx=20)
 
     def actualize_photo_list(self):
         images = project_settings.images_path

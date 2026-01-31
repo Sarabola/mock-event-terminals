@@ -1,5 +1,6 @@
 from app.db import db_helper
 from app.windows.abc import DeviceWindow
+from app.theme import COLORS, STYLES
 import tkinter as tk
 import json
 
@@ -12,22 +13,60 @@ class DeviceSettingsWindow:
         self.device_id_var = tk.StringVar(value=self.device_id)
 
     def show_settings(self):
-        back_button = tk.Button(self.master, text="Back", command=self.go_back)
-        back_button.pack(anchor=tk.NW, pady=10, padx=10)
+        self._clear_window()
+        self.master.configure(bg=COLORS["bg_primary"])
 
-        device_id_frame = tk.Frame(self.master)
-        device_id_frame.pack(anchor=tk.NW, pady=10, padx=10)
-        device_id_label = tk.Label(device_id_frame, text="DEVICE ID:", width=10)
-        device_id_label.pack(side=tk.LEFT)
-        device_id_entry = tk.Entry(device_id_frame, textvariable=self.device_id_var, width=50)
+        main_frame = tk.Frame(self.master, bg=COLORS["bg_primary"])
+        main_frame.pack(expand=True, fill="both", padx=40, pady=40)
+
+        title_label = tk.Label(
+            main_frame, 
+            text="Device Settings", 
+            **STYLES["title_label"]
+        )
+        title_label.pack(pady=(0, 30))
+
+        content_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
+        content_container.pack(expand=True, fill="x")
+
+        device_id_frame = tk.Frame(content_container, bg=COLORS["bg_primary"])
+        device_id_frame.pack(pady=10, anchor="w")
+        
+        device_id_label = tk.Label(
+            device_id_frame, 
+            text="DEVICE ID:", 
+            **STYLES["label"]
+        )
+        device_id_label.pack(side=tk.LEFT, padx=(0, 10))
+        
+        device_id_entry = tk.Entry(
+            device_id_frame, 
+            textvariable=self.device_id_var,
+            width=50,
+            **STYLES["entry"]
+        )
         device_id_entry.pack(side=tk.LEFT)
+
+        button_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
+        button_container.pack(pady=20)
+        
+        back_button = tk.Button(
+            button_container, 
+            text="Back", 
+            command=self.go_back,
+            **STYLES["button"]
+        )
+        back_button.pack(pady=8, fill="x", ipadx=20)
 
     @staticmethod
     def get_actual_settings(device_name: str) -> str:
         terminal_data = db_helper.get_device_by_name(device_name)
         return terminal_data.get("device_id")
 
-    def go_back(self):
+    def _clear_window(self):
         for widget in self.master.winfo_children():
             widget.destroy()
+            
+    def go_back(self):
+        self._clear_window()
         self.devices_window.show()

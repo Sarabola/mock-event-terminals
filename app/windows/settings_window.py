@@ -4,6 +4,7 @@ from tkinter import messagebox
 from typing import TYPE_CHECKING
 from app.config import project_settings
 from app.windows.abc import Window
+from app.theme import COLORS, STYLES
 from dotenv import load_dotenv
 from app.db import db_helper
 
@@ -22,29 +23,77 @@ class SettingsWindow(Window):
         self.port_var = tk.IntVar()
 
     def show_settings(self):
+        self._clear_window()
         self.master.title("Network settings")
+        self.master.configure(bg=COLORS["bg_primary"])
 
-        back_button = tk.Button(self.master, text="Back", command=self.go_back)
-        back_button.pack(anchor=tk.NW, pady=10, padx=10)
+        main_frame = tk.Frame(self.master, bg=COLORS["bg_primary"])
+        main_frame.pack(expand=True, fill="both", padx=40, pady=40)
 
-        host_frame = tk.Frame(self.master)
-        host_frame.pack(anchor=tk.NW, pady=10, padx=10)
-        host_label = tk.Label(host_frame, text="Host:", width=10)
-        host_label.pack(side=tk.LEFT)
+        title_label = tk.Label(
+            main_frame, 
+            text="Network Settings", 
+            **STYLES["title_label"]
+        )
+        title_label.pack(pady=(0, 30))
+
+        content_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
+        content_container.pack(expand=True, fill="x")
+
+        host_frame = tk.Frame(content_container, bg=COLORS["bg_primary"])
+        host_frame.pack(pady=10, anchor="w")
+        
+        host_label = tk.Label(
+            host_frame, 
+            text="Host:", 
+            **STYLES["label"]
+        )
+        host_label.pack(side=tk.LEFT, padx=(0, 10))
+        
         self.host_var = tk.StringVar(value=self.host if self.host else "")
-        host_entry = tk.Entry(host_frame, textvariable=self.host_var, width=30)
+        host_entry = tk.Entry(
+            host_frame, 
+            textvariable=self.host_var, 
+            **STYLES["entry"]
+        )
         host_entry.pack(side=tk.LEFT)
 
-        port_frame = tk.Frame(self.master)
-        port_frame.pack(anchor=tk.NW, pady=10, padx=10)
-        port_label = tk.Label(port_frame, text="Port:", width=10)
-        port_label.pack(side=tk.LEFT)
+        port_frame = tk.Frame(content_container, bg=COLORS["bg_primary"])
+        port_frame.pack(pady=10, anchor="w")
+        
+        port_label = tk.Label(
+            port_frame, 
+            text="Port:", 
+            **STYLES["label"]
+        )
+        port_label.pack(side=tk.LEFT, padx=(0, 10))
+        
         self.port_var = tk.IntVar(value=self.port if self.port else 9091)
-        port_entry = tk.Entry(port_frame, textvariable=self.port_var, width=30)
+        port_entry = tk.Entry(
+            port_frame, 
+            textvariable=self.port_var, 
+            **STYLES["entry"]
+        )
         port_entry.pack(side=tk.LEFT)
 
-        save_button = tk.Button(text="Save", command=self._save_settings)
-        save_button.pack(side=tk.BOTTOM)
+        button_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
+        button_container.pack(pady=20)
+        
+        save_button = tk.Button(
+            button_container, 
+            text="Save", 
+            command=self._save_settings,
+            **STYLES["button"]
+        )
+        save_button.pack(pady=8, fill="x", ipadx=20)
+        
+        back_button = tk.Button(
+            button_container, 
+            text="Back", 
+            command=self.go_back,
+            **STYLES["button"]
+        )
+        back_button.pack(pady=8, fill="x", ipadx=20)
 
     def _save_settings(self):
         new_host = self.host_var.get()
@@ -60,4 +109,9 @@ class SettingsWindow(Window):
         self.go_back()
 
     def go_back(self):
+        self._clear_window()
         self.main_window.create_main_screen()
+    
+    def _clear_window(self):
+        for widget in self.master.winfo_children():
+            widget.destroy()

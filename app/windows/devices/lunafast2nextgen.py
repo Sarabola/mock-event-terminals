@@ -19,13 +19,17 @@ class LunaFast2NextGenWindow(DeviceWindow, Window):
         devices_window.show_settings()
 
     def select_photos(self):
-        self._clear_window()
         images_window = SelectPhotosWindow(self.master, self)
         images_window.show_images()
 
     def send_event(self):
         faces = db_helper.get_actual_images()
         self.sender.make_selected_photos_request(faces)
+
+    def show(self):
+        super().show()
+        # Update photos preview when showing the device window
+        self._update_photos_preview()
 
     def go_back(self):
         self._clear_window()
