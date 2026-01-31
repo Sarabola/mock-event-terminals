@@ -1,8 +1,8 @@
 from app.windows.abc import DeviceWindow, Window
 from app.windows.devices.settings_window import DeviceSettingsWindow
 from app.windows.select_photo import SelectPhotosWindow
+from app.windows.send_status_window import SendStatusWindow
 from app.devices.lunafast2nextgen import LunaFast2NextGenSender
-from app.db import db_helper
 
 
 class LunaFast2NextGenWindow(DeviceWindow, Window):
@@ -23,8 +23,12 @@ class LunaFast2NextGenWindow(DeviceWindow, Window):
         images_window.show_images()
 
     def send_event(self):
-        faces = db_helper.get_actual_images()
-        self.sender.make_selected_photos_request(faces)
+        status_window = SendStatusWindow(self.master, self.TERMINAL_NAME)
+
+        def send_photos_callback(selected_photos, progress_callback):
+            return self.sender.make_selected_photos_request(selected_photos, progress_callback)
+
+        status_window.show_status(send_photos_callback)
 
     def show(self):
         super().show()

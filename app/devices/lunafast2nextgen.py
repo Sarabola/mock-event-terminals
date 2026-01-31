@@ -39,12 +39,16 @@ class LunaFast2NextGenSender:
             self.logger.info(log_message)
         return response.status_code
 
-    def make_selected_photos_request(self, faces: list[str]) -> dict[str, int]:
+    def make_selected_photos_request(self, faces: list[str], progress_callback=None) -> dict[str, int]:
         result = {}
-        for face in faces:
+        for i, face in enumerate(faces):
             face_path = self._IMAGES_PATH.joinpath(face)
             status = self.make_request(face_path)
             result[face] = status
+            if progress_callback:
+                progress = ((i + 1) / len(faces)) * 100
+                progress_callback(face, status, progress)
+            
             time.sleep(3.1)
 
         self.logger.info("Sending successfully end.")

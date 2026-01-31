@@ -115,6 +115,6 @@ class SelectPhotosWindow(Window):
         self.go_back()
 
 
-    def go_back(self, ):
+    def go_back(self):
         self._clear_window()
         self.main_window.show()
