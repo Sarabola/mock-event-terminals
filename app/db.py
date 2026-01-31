@@ -22,19 +22,25 @@ class DatabaseManager:
             json_data = json.load(f)
             return json_data["terminals"].get(device_name)
 
+    def get_device_id_by_name(self, device_name: str) -> str | None:
+        with open(self.db_path, "r") as f:
+            json_data = json.load(f)
+            terminal = json_data["terminals"][device_name]
+            return terminal.get("device_id")
+
     def get_images_data(self) -> dict[str, bool]:
         with open(self.db_path, "r") as f:
             json_data = json.load(f)
             return json_data["images"]
 
-    def get_device_data(self) -> dict[str, bool]:
+    def get_device_data(self) -> dict[str, dict]:
         with open(self.db_path, "r") as f:
             json_data = json.load(f)
             return json_data["terminals"]
 
     def update_data(self, new_data: dict) -> None:
         with open(self.db_path, "w") as f:
-            json.dump(new_data, f)
+            json.dump(new_data, f, indent=2)
 
     def get_actual_images(self) -> list[str]:
         faces = []

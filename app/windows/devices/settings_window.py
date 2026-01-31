@@ -1,7 +1,9 @@
+from app.config import project_settings
 from app.db import db_helper
 from app.windows.abc import DeviceWindow
 from app.theme import COLORS, STYLES
 import tkinter as tk
+from tkinter import messagebox
 import json
 
 
@@ -9,7 +11,8 @@ class DeviceSettingsWindow:
     def __init__(self, master: tk.Tk, devices_window: DeviceWindow, device_name: str):
         self.master = master
         self.devices_window = devices_window
-        self.device_id = self.get_actual_settings(device_name)
+        self.device_name = device_name
+        self.device_id = self.get_actual_settings(self.device_name)
         self.device_id_var = tk.StringVar(value=self.device_id)
 
     def show_settings(self):
@@ -57,11 +60,27 @@ class DeviceSettingsWindow:
             **STYLES["button"]
         )
         back_button.pack(pady=8, fill="x", ipadx=20)
+        save_button = tk.Button(
+            button_container,
+            text="Save",
+            command=self._save_data,
+            **STYLES["button"]
+        )
+        save_button.pack(pady=8, fill="x", ipadx=20)
 
     @staticmethod
     def get_actual_settings(device_name: str) -> str:
         terminal_data = db_helper.get_device_by_name(device_name)
         return terminal_data.get("device_id")
+
+    def _save_data(self):
+        current = self.device_id_var.get()
+        data = db_helper.get_data()
+        if data["terminals"][self.device_name].get("device_id") != current:
+            data["terminals"][self.device_name]["device_id"] = current
+            db_helper.update_data(data)
+            messagebox.showinfo("Success", "Successfully updated device id!")
+        self.go_back()
 
     def _clear_window(self):
         for widget in self.master.winfo_children():

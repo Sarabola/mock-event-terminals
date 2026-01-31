@@ -1,6 +1,8 @@
 import base64
 import time
 from pathlib import Path
+from datetime import datetime
+from random import randint
 
 import requests
 
@@ -17,7 +19,7 @@ class LunaFast2NextGenSender:
     def __init__(self):
         self.host = db_helper.get_host()
         self.port = db_helper.get_port()
-        self.device_id = db_helper.get_device_by_name(self._DEVICE_NAME).get("device_id")
+        self.device_id = db_helper.get_device_id_by_name(self._DEVICE_NAME)
         self.logger = get_logger(self.__class__.__name__)
 
         self._URL = (self._URL_TEMPLATE.format(host=self.host, port=self.port) +
@@ -39,17 +41,35 @@ class LunaFast2NextGenSender:
             self.logger.info(log_message)
         return response.status_code
 
-    def make_selected_photos_request(self, faces: list[str], progress_callback=None) -> dict[str, int]:
+    def make_selected_photos_request(self, faces: list[str], progress_callback=None, 
+                                    temperature_enabled=False, card_event=False) -> dict[str, int]:
         result = {}
         for i, face in enumerate(faces):
-            face_path = self._IMAGES_PATH.joinpath(face)
-            status = self.make_request(face_path)
-            result[face] = status
-            if progress_callback:
-                progress = ((i + 1) / len(faces)) * 100
-                progress_callback(face, status, progress)
-            
-            time.sleep(3.1)
+            try:
+                if card_event:
+                    status = self.make_card_request()
+                else:
+                    face_path = self._IMAGES_PATH.joinpath(face)
+                    if temperature_enabled:
+                        status = self.make_face_request_with_temperature(face_path)
+                    else:
+                        status = self.make_request(face_path)
+                
+                result[face] = status
+                
+                if progress_callback:
+                    progress = ((i + 1) / len(faces)) * 100
+                    progress_callback(face, status, progress)
+                
+                time.sleep(3.1)
+                
+            except Exception as e:
+                self.logger.error(f"Error processing {face}: {str(e)}")
+                result[face] = 500
+                
+                if progress_callback:
+                    progress = ((i + 1) / len(faces)) * 100
+                    progress_callback(face, 500, progress)
 
         self.logger.info("Sending successfully end.")
         return result

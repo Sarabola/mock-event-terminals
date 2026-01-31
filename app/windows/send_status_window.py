@@ -18,7 +18,7 @@ class SendStatusWindow:
         """Show status window and start sending process."""
         self.results_callback = results_callback
         self._create_window()
-        
+
         thread = Thread(target=self._send_photos, daemon=True)
         thread.start()
 
@@ -75,15 +75,15 @@ class SendStatusWindow:
         canvas = tk.Canvas(results_container, bg=COLORS["bg_secondary"], highlightthickness=0)
         scrollbar = ttk.Scrollbar(results_container, orient="vertical", command=canvas.yview)
         self.results_frame = tk.Frame(canvas, bg=COLORS["bg_secondary"])
-        
+
         self.results_frame.bind(
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
-        
+
         canvas.create_window((0, 0), window=self.results_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
-        
+
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
@@ -124,10 +124,8 @@ class SendStatusWindow:
         def progress_callback(photo_name, status, progress):
             self.window.after(0, lambda: self._update_progress(photo_name, status, progress))
 
-        results = self.results_callback(selected_photos, progress_callback)
-
+        self.results_callback(selected_photos, progress_callback)
         self._finish_sending()
-
 
     def _update_progress(self, photo_name: str, status: int, progress: float):
         """Update progress bar and add photo result."""
@@ -144,7 +142,7 @@ class SendStatusWindow:
         """Add a photo result to the results frame."""
         result_frame = tk.Frame(self.results_frame, bg=COLORS["bg_secondary"])
         result_frame.pack(fill="x", pady=2, padx=5)
-        
+
         # Status icon and text
         if status == 200:
             icon = "✅"
@@ -154,7 +152,7 @@ class SendStatusWindow:
             icon = "❌"
             color = COLORS["error"]
             text_color = COLORS["text_secondary"]
-        
+
         status_label = tk.Label(
             result_frame,
             text=f"{icon} {photo_name}",
@@ -163,7 +161,7 @@ class SendStatusWindow:
             font=("Arial", 10)
         )
         status_label.pack(side="left")
-        
+
         # Status code
         status_code_label = tk.Label(
             result_frame,
@@ -186,16 +184,15 @@ class SendStatusWindow:
     def _enable_close_button(self):
         """Enable close button and update final status."""
         self.progress_var.set(100)
-        
-        # Count successful/failed
+
         successful = sum(1 for status in self.results.values() if status == 200)
         total = len(self.results)
-        
+
         if total > 0:
             final_status = f"Completed: {successful}/{total} photos sent successfully"
         else:
             final_status = "No photos were sent"
-        
+
         self.status_label.config(text=final_status)
         self.close_button.config(state="normal")
 

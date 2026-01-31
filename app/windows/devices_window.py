@@ -3,6 +3,7 @@ import tkinter as tk
 from app.theme import COLORS, STYLES
 from app.windows.abc import Window
 from app.windows.devices.lunafast2nextgen import LunaFast2NextGenWindow
+from app.windows.devices.lunafast4a import LunaFast4AWindow
 
 
 class DevicesWindow(Window):
@@ -72,7 +73,9 @@ class DevicesWindow(Window):
         lunafast2.show()
 
     def _open_lunafast4a(self):
-        pass
+        self._clear_window()
+        lunafast4a = LunaFast4AWindow(self.master, self)
+        lunafast4a.show()
 
     def _open_r20(self):
         pass

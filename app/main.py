@@ -7,7 +7,6 @@ class TerminalEmulatorApp:
         self.root = root
         self.root.title("Terminal Emulator")
         self.root.geometry("500x600")
-        self.root.resizable(False, False)
         apply_theme_to_root(root)
         self._create_main_window()
 
