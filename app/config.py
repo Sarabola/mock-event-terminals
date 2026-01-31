@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class Settings:
 
+class Settings:
     db_file = Path(__file__).parent / "settings.json"
     images_path = Path(__file__).parent.parent / "images"
 
@@ -23,5 +23,6 @@ def get_logger(name: str, level: int = logging.DEBUG) -> logging.Logger:
         logger.addHandler(console_handler)
 
     return logger
+
 
 project_settings = Settings()

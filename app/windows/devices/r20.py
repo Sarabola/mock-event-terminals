@@ -24,8 +24,10 @@ class R20Window(DeviceWindow, Window):
 
     def send_event(self):
         status_window = SendStatusWindow(self.master, self.TERMINAL_NAME)
+
         def send_photos_callback(selected_photos, progress_callback):
             return self.sender.make_selected_photos_request(selected_photos, progress_callback)
+
         status_window.show_status(send_photos_callback)
 
     def go_back(self):

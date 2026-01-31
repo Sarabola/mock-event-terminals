@@ -25,8 +25,8 @@ class DeviceSettingsWindow:
         main_frame.pack(expand=True, fill="both", padx=40, pady=40)
 
         title_label = tk.Label(
-            main_frame, 
-            text="Device Settings", 
+            main_frame,
+            text="Device Settings",
             **STYLES["title_label"]
         )
         title_label.pack(pady=(0, 30))
@@ -36,16 +36,16 @@ class DeviceSettingsWindow:
 
         device_id_frame = tk.Frame(content_container, bg=COLORS["bg_primary"])
         device_id_frame.pack(pady=10, anchor="w")
-        
+
         device_id_label = tk.Label(
-            device_id_frame, 
-            text="DEVICE ID:", 
+            device_id_frame,
+            text="DEVICE ID:",
             **STYLES["label"]
         )
         device_id_label.pack(side=tk.LEFT, padx=(0, 10))
-        
+
         device_id_entry = tk.Entry(
-            device_id_frame, 
+            device_id_frame,
             textvariable=self.device_id_var,
             width=50,
             **STYLES["entry"]
@@ -54,10 +54,10 @@ class DeviceSettingsWindow:
 
         button_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
         button_container.pack(pady=20)
-        
+
         back_button = tk.Button(
-            button_container, 
-            text="Back", 
+            button_container,
+            text="Back",
             command=self.go_back,
             **STYLES["button"]
         )
@@ -88,7 +88,7 @@ class DeviceSettingsWindow:
     def _clear_window(self):
         for widget in self.master.winfo_children():
             widget.destroy()
-            
+
     def go_back(self):
         self._clear_window()
         self.devices_window.show()

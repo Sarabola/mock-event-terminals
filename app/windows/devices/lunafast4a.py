@@ -36,7 +36,7 @@ class LunaFast4AWindow(DeviceWindow, Window):
             "temperature_enabled": self.temperature_enabled.get(),
             "card_event": self.card_event.get()
         })
-        
+
         with open(db_helper.db_path, "r") as f:
             data = json.load(f)
         data["terminals"][self.TERMINAL_NAME] = device_data
@@ -54,12 +54,12 @@ class LunaFast4AWindow(DeviceWindow, Window):
 
     def send_event(self):
         self._save_settings()
-        
+
         status_window = SendStatusWindow(self.master, self.TERMINAL_NAME)
 
         def send_photos_callback(selected_photos, progress_callback):
             return self.sender.make_selected_photos_request(
-                selected_photos, 
+                selected_photos,
                 progress_callback,
                 temperature_enabled=self.temperature_enabled.get(),
                 card_event=self.card_event.get()

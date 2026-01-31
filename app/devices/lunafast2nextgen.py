@@ -28,17 +28,17 @@ class LunaFast2NextGenSender(DeviceSender):
             try:
                 status = self.make_request(face_path)
                 result[face] = status
-                
+
                 if progress_callback:
                     progress = ((i + 1) / len(faces)) * 100
                     progress_callback(face, status, progress)
-                
+
                 time.sleep(3.1)
-                
+
             except Exception as e:
                 self.logger.error(f"Error processing {face}: {str(e)}")
                 result[face] = 500
-                
+
                 if progress_callback:
                     progress = ((i + 1) / len(faces)) * 100
                     progress_callback(face, 500, progress)

@@ -69,7 +69,7 @@ class DeviceWithTemperatureSettingsWindow:
 
         event_frame = tk.Frame(content_container, bg=COLORS["bg_secondary"])
         event_frame.pack(fill="x", pady=20, padx=10)
-        
+
         event_time_label = tk.Label(
             event_frame,
             text="Event Timing:",
@@ -81,7 +81,7 @@ class DeviceWithTemperatureSettingsWindow:
         self.old_event = tk.StringVar(value="old" if current_time_status is True else "current")
         event_time_frame = tk.Frame(event_frame, bg=COLORS["bg_secondary"])
         event_time_frame.pack(fill="x", padx=20, pady=5)
-        
+
         current_radio = tk.Radiobutton(
             event_time_frame,
             text="Current Event",
@@ -90,7 +90,7 @@ class DeviceWithTemperatureSettingsWindow:
             **STYLES["checkbutton"]
         )
         current_radio.pack(side=tk.LEFT, padx=5)
-        
+
         old_radio = tk.Radiobutton(
             event_time_frame,
             text="Old Event (Random Past Date)",
@@ -120,11 +120,11 @@ class DeviceWithTemperatureSettingsWindow:
             **STYLES["label"]
         )
         temp_state_label.pack(pady=5, anchor="w", padx=10)
-        
+
         self.temp_state_var = tk.StringVar(value="normal")
         temp_state_frame = tk.Frame(self.temp_options_frame, bg=COLORS["bg_secondary"])
         temp_state_frame.pack(fill="x", padx=20, pady=5)
-        
+
         normal_radio = tk.Radiobutton(
             temp_state_frame,
             text="Normal (36.1-36.9°C)",
@@ -133,7 +133,7 @@ class DeviceWithTemperatureSettingsWindow:
             **STYLES["checkbutton"]
         )
         normal_radio.pack(side=tk.LEFT, padx=5)
-        
+
         above_normal_radio = tk.Radiobutton(
             temp_state_frame,
             text="Above Normal (37.0-41.3°C)",
@@ -142,7 +142,7 @@ class DeviceWithTemperatureSettingsWindow:
             **STYLES["checkbutton"]
         )
         above_normal_radio.pack(side=tk.LEFT, padx=5)
-        
+
         abnormal_radio = tk.Radiobutton(
             temp_state_frame,
             text="Abnormal (33.0-36.0°C or 41.4-43.5°C)",
@@ -195,16 +195,16 @@ class DeviceWithTemperatureSettingsWindow:
             "abnormal_temp": self.temp_state_var.get() == "abnormal",
             "old_event": self.old_event.get() == "old"
         }
-        
+
         for key, value in settings.items():
             if data["terminals"][self.device_name].get(key) != value:
                 data["terminals"][self.device_name][key] = value
                 device_updated = True
-        
+
         if device_updated:
             db_helper.update_data(data)
             messagebox.showinfo("Success", "Successfully updated device settings!")
-        
+
         self.go_back()
 
     def _clear_window(self):

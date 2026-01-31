@@ -31,8 +31,8 @@ class SettingsWindow(Window):
         main_frame.pack(expand=True, fill="both", padx=40, pady=40)
 
         title_label = tk.Label(
-            main_frame, 
-            text="Network Settings", 
+            main_frame,
+            text="Network Settings",
             **STYLES["title_label"]
         )
         title_label.pack(pady=(0, 30))
@@ -42,54 +42,54 @@ class SettingsWindow(Window):
 
         host_frame = tk.Frame(content_container, bg=COLORS["bg_primary"])
         host_frame.pack(pady=10, anchor="w")
-        
+
         host_label = tk.Label(
-            host_frame, 
-            text="Host:", 
+            host_frame,
+            text="Host:",
             **STYLES["label"]
         )
         host_label.pack(side=tk.LEFT, padx=(0, 10))
-        
+
         self.host_var = tk.StringVar(value=self.host if self.host else "")
         host_entry = tk.Entry(
-            host_frame, 
-            textvariable=self.host_var, 
+            host_frame,
+            textvariable=self.host_var,
             **STYLES["entry"]
         )
         host_entry.pack(side=tk.LEFT)
 
         port_frame = tk.Frame(content_container, bg=COLORS["bg_primary"])
         port_frame.pack(pady=10, anchor="w")
-        
+
         port_label = tk.Label(
-            port_frame, 
-            text="Port:", 
+            port_frame,
+            text="Port:",
             **STYLES["label"]
         )
         port_label.pack(side=tk.LEFT, padx=(0, 10))
-        
+
         self.port_var = tk.IntVar(value=self.port if self.port else 9091)
         port_entry = tk.Entry(
-            port_frame, 
-            textvariable=self.port_var, 
+            port_frame,
+            textvariable=self.port_var,
             **STYLES["entry"]
         )
         port_entry.pack(side=tk.LEFT)
 
         button_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
         button_container.pack(pady=20)
-        
+
         save_button = tk.Button(
-            button_container, 
-            text="Save", 
+            button_container,
+            text="Save",
             command=self._save_settings,
             **STYLES["button"]
         )
         save_button.pack(pady=8, fill="x", ipadx=20)
-        
+
         back_button = tk.Button(
-            button_container, 
-            text="Back", 
+            button_container,
+            text="Back",
             command=self.go_back,
             **STYLES["button"]
         )
@@ -111,7 +111,7 @@ class SettingsWindow(Window):
     def go_back(self):
         self._clear_window()
         self.main_window.create_main_screen()
-    
+
     def _clear_window(self):
         for widget in self.master.winfo_children():
             widget.destroy()

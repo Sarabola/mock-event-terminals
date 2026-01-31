@@ -1,5 +1,3 @@
-
-
 import base64
 import time
 from datetime import datetime, timedelta
@@ -26,7 +24,7 @@ class BewardSender(DeviceSender):
         for i, face in enumerate(faces):
             face_path = self._IMAGES_PATH.joinpath(face)
             try:
-                body = self.get_beward_body(face_path, temperature_enabled, above_normal_temp ,abnormal_temp, old_event)
+                body = self.get_beward_body(face_path, temperature_enabled, above_normal_temp, abnormal_temp, old_event)
                 status = self.make_request(body)
                 result[face] = status
 
@@ -102,5 +100,3 @@ class BewardSender(DeviceSender):
             minutes=randint(1, 59),
         )
         return (datetime.now() - delta).strftime("%Y-%m-%dT%H:%M:%S")
-
-

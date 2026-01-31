@@ -7,6 +7,7 @@ from app.theme import COLORS, STYLES
 if TYPE_CHECKING:
     from .devices_window import DevicesWindow
 
+
 class DeviceWindow(ABC):
 
     def __init__(self, master, devices_window: "DevicesWindow"):
@@ -20,7 +21,7 @@ class DeviceWindow(ABC):
         main_frame.pack(expand=True, fill="both", padx=40, pady=40)
 
         title_label = tk.Label(
-            main_frame, 
+            main_frame,
             text=self.__class__.__name__,
             **STYLES["title_label"]
         )
@@ -30,32 +31,32 @@ class DeviceWindow(ABC):
         button_container.pack(expand=True)
 
         make_request_button = tk.Button(
-            button_container, 
-            text="Send photos", 
+            button_container,
+            text="Send photos",
             command=self.send_event,
             **STYLES["button"]
         )
         make_request_button.pack(pady=8, fill="x", ipadx=20)
 
         settings_button = tk.Button(
-            button_container, 
-            text="Settings", 
+            button_container,
+            text="Settings",
             command=self.open_settings,
             **STYLES["button"]
         )
         settings_button.pack(pady=8, fill="x", ipadx=20)
 
         select_photos = tk.Button(
-            button_container, 
-            text="Select photos", 
+            button_container,
+            text="Select photos",
             command=self.select_photos,
             **STYLES["button"]
         )
         select_photos.pack(pady=8, fill="x", ipadx=20)
 
         back_button = tk.Button(
-            button_container, 
-            text="Back", 
+            button_container,
+            text="Back",
             command=self.devices_window.show_devices,
             **STYLES["button"]
         )
@@ -66,17 +67,17 @@ class DeviceWindow(ABC):
         """Create a frame to display selected photos that will be sent."""
         photos_frame = tk.Frame(parent_frame, bg=COLORS["bg_secondary"], relief="solid", borderwidth=1)
         photos_frame.pack(fill="x", pady=(20, 0))
-        
+
         preview_title = tk.Label(
-            photos_frame, 
-            text="Selected Photos for Sending:", 
+            photos_frame,
+            text="Selected Photos for Sending:",
             **STYLES["label"]
         )
         preview_title.pack(pady=(10, 5), padx=10, anchor="w")
-        
+
         self.photos_container = tk.Frame(photos_frame, bg=COLORS["bg_secondary"])
         self.photos_container.pack(fill="x", padx=10, pady=(0, 10))
-        
+
         self._update_photos_preview()
 
     def _update_photos_preview(self):
@@ -87,7 +88,7 @@ class DeviceWindow(ABC):
 
             from app.db import db_helper
             selected_photos = db_helper.get_actual_images()
-            
+
             if selected_photos:
                 for photo_name in selected_photos:
                     photo_label = tk.Label(

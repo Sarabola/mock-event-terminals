@@ -3,7 +3,7 @@ image = b'image'
 R20FACE_JSON = {
     'aliveType': '3',
     'antiPassbackResult': '3',
-    'base64': image, #change
+    'base64': image,  # change
     'data': '',
     'deviceKey': '84E0F42449C7527A',
     'direction': None,

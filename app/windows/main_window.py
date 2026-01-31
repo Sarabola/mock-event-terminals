@@ -17,8 +17,8 @@ class MainWindow(Window):
         main_frame.pack(expand=True, fill="both", padx=40, pady=40)
 
         title_label = tk.Label(
-            main_frame, 
-            text="Terminal Emulator", 
+            main_frame,
+            text="Terminal Emulator",
             **STYLES["title_label"]
         )
         title_label.pack(pady=(0, 40))
@@ -27,24 +27,24 @@ class MainWindow(Window):
         button_container.pack(expand=True)
 
         devices_button = tk.Button(
-            button_container, 
-            text="Devices", 
+            button_container,
+            text="Devices",
             command=self._show_devices,
             **STYLES["button"]
         )
         devices_button.pack(pady=8, fill="x", ipadx=20)
 
         settings_button = tk.Button(
-            button_container, 
-            text="Settings", 
+            button_container,
+            text="Settings",
             command=self._show_settings,
             **STYLES["button"]
         )
         settings_button.pack(pady=8, fill="x", ipadx=20)
 
         exit_button = tk.Button(
-            button_container, 
-            text="Exit", 
+            button_container,
+            text="Exit",
             command=self.go_back,
             **STYLES["button"]
         )

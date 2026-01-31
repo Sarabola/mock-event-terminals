@@ -17,8 +17,8 @@ class DevicesWindow(Window):
         main_frame.pack(expand=True, fill="both", padx=40, pady=40)
 
         title_label = tk.Label(
-            main_frame, 
-            text="Devices", 
+            main_frame,
+            text="Devices",
             **STYLES["title_label"]
         )
         title_label.pack(pady=(0, 30))
@@ -27,40 +27,40 @@ class DevicesWindow(Window):
         button_container.pack(expand=True)
 
         next_gen_button = tk.Button(
-            button_container, 
-            text="Luna Fast 2 Next Gen", 
+            button_container,
+            text="Luna Fast 2 Next Gen",
             command=self._open_lunafast2nextgen,
             **STYLES["button"]
         )
         next_gen_button.pack(pady=8, fill="x", ipadx=20)
 
         luna_fast_button = tk.Button(
-            button_container, 
-            text="Luna Fast 4A", 
+            button_container,
+            text="Luna Fast 4A",
             command=self._open_lunafast4a,
             **STYLES["button"]
         )
         luna_fast_button.pack(pady=8, fill="x", ipadx=20)
 
         r20_face_button = tk.Button(
-            button_container, 
-            text="R20", 
+            button_container,
+            text="R20",
             command=self._open_r20,
             **STYLES["button"]
         )
         r20_face_button.pack(pady=8, fill="x", ipadx=20)
 
         beward_button = tk.Button(
-            button_container, 
-            text="Beward", 
+            button_container,
+            text="Beward",
             command=self._open_beward,
             **STYLES["button"]
         )
         beward_button.pack(pady=8, fill="x", ipadx=20)
 
         back_button = tk.Button(
-            button_container, 
-            text="Back", 
+            button_container,
+            text="Back",
             command=self.go_back,
             **STYLES["button"]
         )
