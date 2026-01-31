@@ -28,7 +28,6 @@ class LunaFast2NextGenWindow(DeviceWindow, Window):
 
     def show(self):
         super().show()
-        # Update photos preview when showing the device window
         self._update_photos_preview()
 
     def go_back(self):

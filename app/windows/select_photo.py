@@ -69,14 +69,6 @@ class SelectPhotosWindow(Window):
         button_container = tk.Frame(main_frame, bg=COLORS["bg_primary"])
         button_container.pack(pady=20)
         
-        back_button = tk.Button(
-            button_container, 
-            text="Back", 
-            command=self.go_back,
-            **STYLES["button"]
-        )
-        back_button.pack(pady=8, fill="x", ipadx=20)
-        
         save_button = tk.Button(
             button_container, 
             text="Save", 
@@ -84,6 +76,14 @@ class SelectPhotosWindow(Window):
             **STYLES["button"]
         )
         save_button.pack(pady=8, fill="x", ipadx=20)
+        
+        back_button = tk.Button(
+            button_container, 
+            text="Back", 
+            command=self.go_back,
+            **STYLES["button"]
+        )
+        back_button.pack(pady=8, fill="x", ipadx=20)
 
     def actualize_photo_list(self):
         images = project_settings.images_path

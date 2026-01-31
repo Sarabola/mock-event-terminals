@@ -6,7 +6,7 @@ class TerminalEmulatorApp:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Terminal Emulator")
-        self.root.geometry("700x500")
+        self.root.geometry("500x600")
         self.root.resizable(False, False)
         apply_theme_to_root(root)
         self._create_main_window()
