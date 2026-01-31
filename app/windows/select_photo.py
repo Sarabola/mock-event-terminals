@@ -1,11 +1,11 @@
 import json
+import tkinter as tk
+from tkinter import messagebox
 
 from app.config import project_settings
 from app.db import db_helper
-from app.windows.abc import Window, DeviceWindow
 from app.theme import COLORS, STYLES
-import tkinter as tk
-from tkinter import messagebox
+from app.windows.abc import DeviceWindow, Window
 
 
 class SelectPhotosWindow(Window):

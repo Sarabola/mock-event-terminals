@@ -4,7 +4,8 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
+
 from app.devices.abc import DeviceSender
 from app.devices.r20.data import R20FACE_JSON
 

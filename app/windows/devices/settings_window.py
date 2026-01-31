@@ -1,11 +1,10 @@
-from app.config import project_settings
-from app.db import db_helper
-from app.devices.abc import DeviceSender
-from app.windows.abc import DeviceWindow
-from app.theme import COLORS, STYLES
 import tkinter as tk
 from tkinter import messagebox
-import json
+
+from app.db import db_helper
+from app.devices.abc import DeviceSender
+from app.theme import COLORS, STYLES
+from app.windows.abc import DeviceWindow
 
 
 class DeviceSettingsWindow:

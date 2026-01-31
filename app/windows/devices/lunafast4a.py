@@ -1,13 +1,13 @@
+import json
+import tkinter as tk
+
+from app.db import db_helper
+from app.devices.lunafast4a import LunaFast4ASender
+from app.theme import COLORS, STYLES
 from app.windows.abc import DeviceWindow, Window
-from app.windows.devices.settings_window import DeviceSettingsWindow
 from app.windows.devices.settings_with_temperature import DeviceWithTemperatureSettingsWindow
 from app.windows.select_photo import SelectPhotosWindow
 from app.windows.send_status_window import SendStatusWindow
-from app.devices.lunafast4a import LunaFast4ASender
-from app.db import db_helper
-from app.theme import COLORS, STYLES
-import tkinter as tk
-import json
 
 
 class LunaFast4AWindow(DeviceWindow, Window):

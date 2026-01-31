@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.config import project_settings, get_logger
+from app.config import get_logger, project_settings
 from app.db import db_helper
 
 

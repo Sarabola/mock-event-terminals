@@ -2,11 +2,13 @@ import json
 import tkinter as tk
 from tkinter import messagebox
 from typing import TYPE_CHECKING
-from app.config import project_settings
-from app.windows.abc import Window
-from app.theme import COLORS, STYLES
+
 from dotenv import load_dotenv
+
+from app.config import project_settings
 from app.db import db_helper
+from app.theme import COLORS, STYLES
+from app.windows.abc import Window
 
 if TYPE_CHECKING:
     from app.windows.main_window import MainWindow

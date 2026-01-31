@@ -1,8 +1,8 @@
+from app.devices.lunafast2nextgen import LunaFast2NextGenSender
 from app.windows.abc import DeviceWindow, Window
 from app.windows.devices.settings_window import DeviceSettingsWindow
 from app.windows.select_photo import SelectPhotosWindow
 from app.windows.send_status_window import SendStatusWindow
-from app.devices.lunafast2nextgen import LunaFast2NextGenSender
 
 
 class LunaFast2NextGenWindow(DeviceWindow, Window):

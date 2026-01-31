@@ -1,9 +1,9 @@
 import tkinter as tk
-from tkinter import ttk
 from threading import Thread
-import time
-from app.theme import COLORS, STYLES
+from tkinter import ttk
+
 from app.db import db_helper
+from app.theme import COLORS, STYLES
 
 
 class SendStatusWindow:

@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import tkinter as tk
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 from app.theme import COLORS, STYLES

@@ -1,10 +1,10 @@
-from tkinter import ttk
 import tkinter as tk
 
 from app.theme import COLORS, STYLES
+
+from .abc import Window
 from .devices_window import DevicesWindow
 from .settings_window import SettingsWindow
-from .abc import Window
 
 
 class MainWindow(Window):

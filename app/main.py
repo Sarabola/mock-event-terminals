@@ -1,14 +1,15 @@
 import json
 import tkinter as tk
 
-from app.config import project_settings
-from app.theme import apply_theme_to_root, COLORS
 from windows.main_window import MainWindow
+
+from app.config import project_settings
+from app.theme import apply_theme_to_root
 
 
 class TerminalEmulatorApp:
-    def __init__(self, root: tk.Tk):
-        self.root = root
+    def __init__(self, _root: tk.Tk):
+        self.root = _root
         self.root.title("Terminal Emulator")
         self.root.geometry("500x600")
         apply_theme_to_root(root)
