@@ -48,7 +48,7 @@ class BewardSender(DeviceSender):
         return result
 
     def make_request(self, body: dict | bytes) -> int:
-        response = requests.post(url=self._URL, json=body)
+        response = requests.post(url=self._url, json=body)
         if response.status_code != 200:
             self.logger.warning(f"Failed request! Error: {response.text}.")
         return response.status_code

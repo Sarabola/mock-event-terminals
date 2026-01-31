@@ -21,7 +21,7 @@ class DeviceWindow(ABC):
 
         title_label = tk.Label(
             main_frame, 
-            text="Luna Fast 2 Next Gen", 
+            text=self.__class__.__name__,
             **STYLES["title_label"]
         )
         title_label.pack(pady=(0, 30))

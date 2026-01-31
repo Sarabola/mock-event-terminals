@@ -48,7 +48,7 @@ class R20Sender(DeviceSender):
         return result
 
     def make_request(self, body: dict | bytes) -> int:
-        response = requests.request(method='POST', url=self._URL, json=body)
+        response = requests.request(method='POST', url=self._url, json=body)
         if response.status_code != 200:
             self.logger.warning(f"Bad status {response.status_code}: Error {response.text}")
         return response.status_code

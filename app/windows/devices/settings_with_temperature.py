@@ -1,19 +1,20 @@
 from app.config import project_settings
 from app.db import db_helper
+from app.devices.abc import DeviceSender
 from app.windows.abc import DeviceWindow
 from app.theme import COLORS, STYLES
 import tkinter as tk
 from tkinter import messagebox
-import json
 
 
 class DeviceWithTemperatureSettingsWindow:
-    def __init__(self, master: tk.Tk, devices_window: DeviceWindow, device_name: str):
+    def __init__(self, master: tk.Tk, devices_window: DeviceWindow, device_name: str, device_sender: DeviceSender):
         self.master = master
         self.devices_window = devices_window
         self.device_name = device_name
         self.device_id = db_helper.get_device_id_by_name(self.device_name)
         self.device_id_var = tk.StringVar(value=self.device_id)
+        self.device = device_sender
 
         self.enable_temp = tk.BooleanVar()
         self.above_normal_temp = tk.BooleanVar()
@@ -75,15 +76,16 @@ class DeviceWithTemperatureSettingsWindow:
             **STYLES["label"]
         )
         event_time_label.pack(pady=5, anchor="w", padx=10)
-        
-        self.event_time_var = tk.StringVar(value="current")
+
+        current_time_status = db_helper.get_device_by_name(self.device_name).get("old_event")
+        self.old_event = tk.StringVar(value="old" if current_time_status is True else "current")
         event_time_frame = tk.Frame(event_frame, bg=COLORS["bg_secondary"])
         event_time_frame.pack(fill="x", padx=20, pady=5)
         
         current_radio = tk.Radiobutton(
             event_time_frame,
             text="Current Event",
-            variable=self.event_time_var,
+            variable=self.old_event,
             value="current",
             **STYLES["checkbutton"]
         )
@@ -92,7 +94,7 @@ class DeviceWithTemperatureSettingsWindow:
         old_radio = tk.Radiobutton(
             event_time_frame,
             text="Old Event (Random Past Date)",
-            variable=self.event_time_var,
+            variable=self.old_event,
             value="old",
             **STYLES["checkbutton"]
         )
@@ -185,12 +187,13 @@ class DeviceWithTemperatureSettingsWindow:
         if data["terminals"][self.device_name].get("device_id") != current:
             data["terminals"][self.device_name]["device_id"] = current
             device_updated = True
+        self.device.device_id = current
 
         settings = {
             "enable_temp": self.enable_temp.get(),
             "above_normal_temp": self.temp_state_var.get() == "above_normal",
             "abnormal_temp": self.temp_state_var.get() == "abnormal",
-            "old_event": self.event_time_var.get() == "old"
+            "old_event": self.old_event.get() == "old"
         }
         
         for key, value in settings.items():

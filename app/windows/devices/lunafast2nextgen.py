@@ -15,7 +15,7 @@ class LunaFast2NextGenWindow(DeviceWindow, Window):
 
     def open_settings(self):
         self._clear_window()
-        devices_window = DeviceSettingsWindow(self.master, self, self.TERMINAL_NAME)
+        devices_window = DeviceSettingsWindow(self.master, self, self.TERMINAL_NAME, self.sender)
         devices_window.show_settings()
 
     def select_photos(self):

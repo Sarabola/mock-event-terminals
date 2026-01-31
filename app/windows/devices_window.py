@@ -2,6 +2,7 @@ import tkinter as tk
 
 from app.theme import COLORS, STYLES
 from app.windows.abc import Window
+from app.windows.devices.beward import BewardWindow
 from app.windows.devices.lunafast2nextgen import LunaFast2NextGenWindow
 from app.windows.devices.lunafast4a import LunaFast4AWindow
 from app.windows.devices.r20 import R20Window
@@ -84,4 +85,6 @@ class DevicesWindow(Window):
         r20.show()
 
     def _open_beward(self):
-        pass
+        self._clear_window()
+        beward = BewardWindow(self.master, self)
+        beward.show()

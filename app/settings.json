@@ -8,28 +8,29 @@
       "device_id": "5f791379-9d4f-4891-bf85-b933e08d6b42"
     },
     "lunafast4a": {
-      "device_id": "",
-      "temperature_enabled": false,
+      "device_id": "6ae1ee3a-2a9f-4203-854a-395ab2af8568",
+      "enable_temp": false,
       "card_event": false,
       "above_normal_temp": false,
       "abnormal_temp": false,
-      "old_event": false
+      "old_event": false,
+      "temperature_enabled": false
     },
     "r20": {
-      "device_id": "5f791379-9d4f-4891-bf85-b933e08d6b42"
+      "device_id": "18dfa7a5-4d1f-4c75-b92c-4bf8e1f6436a"
     },
     "beward": {
-      "device_id": "",
-      "enable_temp": false,
-      "above_normal_temp": false,
+      "device_id": "5535c7dd-feb0-4493-bd2a-277ed3e8e234",
+      "enable_temp": true,
+      "above_normal_temp": true,
       "abnormal_temp": false,
       "old_event": false
     }
   },
   "images": {
     "face_only_for_autotests.jpg": true,
-    "max.jpg": true,
-    "multiple_faces.jpg": true,
+    "max.jpg": false,
+    "multiple_faces.jpg": false,
     "unknow_face.jpg": false
   }
 }

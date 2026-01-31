@@ -1,5 +1,6 @@
 from app.config import project_settings
 from app.db import db_helper
+from app.devices.abc import DeviceSender
 from app.windows.abc import DeviceWindow
 from app.theme import COLORS, STYLES
 import tkinter as tk
@@ -8,12 +9,13 @@ import json
 
 
 class DeviceSettingsWindow:
-    def __init__(self, master: tk.Tk, devices_window: DeviceWindow, device_name: str):
+    def __init__(self, master: tk.Tk, devices_window: DeviceWindow, device_name: str, device_sender: DeviceSender):
         self.master = master
         self.devices_window = devices_window
         self.device_name = device_name
         self.device_id = self.get_actual_settings(self.device_name)
         self.device_id_var = tk.StringVar(value=self.device_id)
+        self.device = device_sender
 
     def show_settings(self):
         self._clear_window()
@@ -80,6 +82,7 @@ class DeviceSettingsWindow:
             data["terminals"][self.device_name]["device_id"] = current
             db_helper.update_data(data)
             messagebox.showinfo("Success", "Successfully updated device id!")
+        self.device.device_id = current
         self.go_back()
 
     def _clear_window(self):

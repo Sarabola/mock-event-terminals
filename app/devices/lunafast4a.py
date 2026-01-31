@@ -106,7 +106,6 @@ class LunaFast4ASender(DeviceSender):
 
     def make_face_request(self, face: bytes):
         """Send face request without temperature."""
-        time.sleep(1)
         face_body = self.get_face_body()
         face_body = json.dumps(face_body)
         template_data = self.HIK_FACE_BODY_TEMPLATE.format(body=face_body)
@@ -121,7 +120,7 @@ class LunaFast4ASender(DeviceSender):
         return self.make_request(body=data)
 
     def make_request(self, body: dict | bytes) -> int:
-        response = requests.request(method='POST', url=self._URL, data=body)
+        response = requests.request(method='POST', url=self._url, data=body)
         if response.status_code != 200:
             self.logger.warning(f"Failed request! Error: {response.text}.")
         return response.status_code

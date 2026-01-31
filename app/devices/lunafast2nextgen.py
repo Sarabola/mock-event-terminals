@@ -16,7 +16,7 @@ class LunaFast2NextGenSender(DeviceSender):
         return {"bestshot_b64": base_64.decode("utf-8"), "isSigned": False, "device_id": self.device_id}
 
     def make_request(self, face_body) -> int:
-        response = requests.request(method='POST', url=self._URL, json=face_body)
+        response = requests.request(method='POST', url=self._url, json=face_body)
         if response.status_code != 200:
             self.logger.warning(f"Bad status {response.status_code}: Error {response.text}")
         return response.status_code
