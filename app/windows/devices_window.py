@@ -4,6 +4,7 @@ from app.theme import COLORS, STYLES
 from app.windows.abc import Window
 from app.windows.devices.lunafast2nextgen import LunaFast2NextGenWindow
 from app.windows.devices.lunafast4a import LunaFast4AWindow
+from app.windows.devices.r20 import R20Window
 
 
 class DevicesWindow(Window):
@@ -78,7 +79,9 @@ class DevicesWindow(Window):
         lunafast4a.show()
 
     def _open_r20(self):
-        pass
+        self._clear_window()
+        r20 = R20Window(self.master, self)
+        r20.show()
 
     def _open_beward(self):
         pass
