@@ -26,3 +26,4 @@ class BewardData(TerminalDataWithTemperature):
 
 class LunaFastData(TerminalDataWithTemperature):
     card_event: bool = False
+    card_number: str = ""

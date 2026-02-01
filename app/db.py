@@ -2,6 +2,38 @@ import json
 
 from app.config import project_settings
 
+DATA_TEMPLATE = {
+    "network": {
+        "host": "localhost",
+        "port": 9091
+    },
+    "terminals": {
+        "lunafast2nextgen": {
+            "device_id": ""
+        },
+        "lunafast4a": {
+            "device_id": "",
+            "card_event": False,
+            "card_number": "12345",
+            "temperature_enabled": False,
+            "above_normal_temp": False,
+            "abnormal_temp": False,
+            "old_event": False
+        },
+        "r20": {
+            "device_id": ""
+        },
+        "beward": {
+            "device_id": "",
+            "enable_temp": False,
+            "above_normal_temp": False,
+            "abnormal_temp": False,
+            "old_event": False
+        }
+    },
+    "images": {}
+}
+
 
 class DatabaseManager:
     def __init__(self, db_path: str) -> None:
@@ -55,6 +87,12 @@ class DatabaseManager:
         with open(self.db_path, "r") as f:
             data = json.load(f)
             return data
+
+    @staticmethod
+    def initialize_db():
+        if not project_settings.db_file.exists():
+            with open("settings.json", "w") as file:
+                json.dump(DATA_TEMPLATE, file, indent=2)
 
 
 db_helper = DatabaseManager(project_settings.db_file)

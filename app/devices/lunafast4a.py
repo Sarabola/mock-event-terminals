@@ -68,7 +68,7 @@ class LunaFast4ASender(DeviceSender):
         for i, face in enumerate(faces):
             try:
                 if terminal_data.card_event:
-                    status = self.make_card_request()
+                    status = self.make_card_request(card=terminal_data.card_number)
                 else:
                     face_path = self._IMAGES_PATH.joinpath(face)
                     face_bytes = face_path.read_bytes()

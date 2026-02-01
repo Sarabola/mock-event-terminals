@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
 
+from annotated_types.test_cases import cases
+
 from app.db import db_helper
 from app.devices.abc import DeviceSender
 from app.theme import COLORS, STYLES
@@ -27,7 +29,7 @@ class DeviceWithTemperatureSettingsWindow:
         """Load existing settings from database."""
         device_data = db_helper.get_device_by_name(self.device_name)
         if device_data:
-            self.enable_temp.set(device_data.get("enable_temp", False))
+            self.enable_temp.set(device_data.get("temperature_enabled", False))
             self.above_normal_temp.set(device_data.get("above_normal_temp", False))
             self.abnormal_temp.set(device_data.get("abnormal_temp", False))
             self.old_event.set(device_data.get("old_event", False))
@@ -77,8 +79,8 @@ class DeviceWithTemperatureSettingsWindow:
         )
         event_time_label.pack(pady=5, anchor="w", padx=10)
 
-        current_time_status = db_helper.get_device_by_name(self.device_name).get("old_event")
-        self.old_event = tk.StringVar(value="old" if current_time_status is True else "current")
+        device_data = db_helper.get_device_by_name(self.device_name)
+        self.old_event = tk.StringVar(value="old" if device_data.get("old_event") is True else "current")
         event_time_frame = tk.Frame(event_frame, bg=COLORS["bg_secondary"])
         event_time_frame.pack(fill="x", padx=20, pady=5)
 
@@ -120,8 +122,13 @@ class DeviceWithTemperatureSettingsWindow:
             **STYLES["label"]
         )
         temp_state_label.pack(pady=5, anchor="w", padx=10)
+        temp_state_var = "normal"
+        if device_data.get("above_normal_temp") is True:
+            temp_state_var="above_normal"
+        elif device_data.get("abnormal_temp") is True:
+            temp_state_var="abnormal"
 
-        self.temp_state_var = tk.StringVar(value="normal")
+        self.temp_state_var = tk.StringVar(value=temp_state_var)
         temp_state_frame = tk.Frame(self.temp_options_frame, bg=COLORS["bg_secondary"])
         temp_state_frame.pack(fill="x", padx=20, pady=5)
 
@@ -191,10 +198,11 @@ class DeviceWithTemperatureSettingsWindow:
             device_updated = True
         self.device.device_id = current
 
+        temperature_enabled = self.enable_temp.get()
         settings = {
-            "enable_temp": self.enable_temp.get(),
-            "above_normal_temp": self.temp_state_var.get() == "above_normal",
-            "abnormal_temp": self.temp_state_var.get() == "abnormal",
+            "temperature_enabled": temperature_enabled,
+            "above_normal_temp": self.temp_state_var.get() == "above_normal" and temperature_enabled,
+            "abnormal_temp": self.temp_state_var.get() == "abnormal" and temperature_enabled,
             "old_event": self.old_event.get() == "old"
         }
 
