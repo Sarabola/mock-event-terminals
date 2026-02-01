@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from app.db import db_helper
 from app.devices.beward import BewardSender
 from app.windows.abc import DeviceWindow, Window
-from app.windows.devices.settings_with_temperature import DeviceWithTemperatureSettingsWindow
+from app.windows.devices.settings_with_temperature import \
+    DeviceWithTemperatureSettingsWindow
 from app.windows.select_photo import SelectPhotosWindow
 from app.windows.send_status_window import SendStatusWindow
 

@@ -175,8 +175,10 @@ class DeviceWithTemperatureSettingsWindow:
     def _toggle_temperature_options(self):
         """Show or hide temperature options based on enable_temp checkbox."""
         if self.enable_temp.get():
+            self.master.geometry("800x700")
             self.temp_options_frame.pack(fill="x", pady=10, padx=10)
         else:
+            self.master.geometry("500x600")
             self.temp_options_frame.pack_forget()
 
     def _save_data(self):
