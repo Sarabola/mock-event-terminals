@@ -2,6 +2,7 @@ import json
 import tkinter as tk
 from tkinter import messagebox
 
+from app.config import get_logger
 from app.db import db_helper
 from app.devices.lunafast4a import LunaFast4ASender
 from app.theme import COLORS, STYLES
@@ -24,6 +25,7 @@ class LunaFast4AWindow(DeviceWindow, Window):
         self.card_event = tk.BooleanVar()
         self.card_number = tk.StringVar()
         self._load_settings()
+        self.logger = get_logger(self.__class__.__name__)
 
     def show(self):
         super().show()
@@ -72,6 +74,14 @@ class LunaFast4AWindow(DeviceWindow, Window):
         )
         card_number_entry.pack(side="left", pady=5)
 
+        send_card_button = tk.Button(
+            self.card_number_frame,
+            text="Send Card",
+            command=self.send_card_event,
+            **STYLES["button"]
+        )
+        send_card_button.pack(side="left", padx=(10, 0), pady=5)
+
         if self.card_event.get():
             self.card_number_frame.pack(fill="x", pady=5)
 
@@ -112,13 +122,17 @@ class LunaFast4AWindow(DeviceWindow, Window):
         images_window = SelectPhotosWindow(self.master, self)
         images_window.show_images()
 
+    def send_card_event(self):
+        """Send only card event without photos."""
+        self._save_settings()
+        if not self.card_number.get().strip():
+            messagebox.showerror("Error", "Please enter a card number")
+            return
+        terminal = self.get_terminal()
+        self.sender.make_card_request(card=terminal.card_number)
+
     def send_event(self):
         self._save_settings()
-
-        if self.card_event.get():
-            if not self.card_number.get().strip():
-                messagebox.showerror("Error", "Please enter a card number when card event is enabled")
-                return
 
         status_window = SendStatusWindow(self.master, self.TERMINAL_NAME)
         terminal = self.get_terminal()

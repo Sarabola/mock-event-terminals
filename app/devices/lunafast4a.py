@@ -67,15 +67,12 @@ class LunaFast4ASender(DeviceSender):
 
         for i, face in enumerate(faces):
             try:
-                if terminal_data.card_event:
-                    status = self.make_card_request(card=terminal_data.card_number)
+                face_path = self._IMAGES_PATH.joinpath(face)
+                face_bytes = face_path.read_bytes()
+                if terminal_data.temperature_enabled:
+                    status = self.make_face_request_with_temperature(face_bytes, terminal=terminal_data)
                 else:
-                    face_path = self._IMAGES_PATH.joinpath(face)
-                    face_bytes = face_path.read_bytes()
-                    if terminal_data.temperature_enabled:
-                        status = self.make_face_request_with_temperature(face_bytes, terminal=terminal_data)
-                    else:
-                        status = self.make_face_request(face_bytes, terminal=terminal_data)
+                    status = self.make_face_request(face_bytes, terminal=terminal_data)
 
                 result[face] = status
 
@@ -83,7 +80,7 @@ class LunaFast4ASender(DeviceSender):
                     progress = ((i + 1) / len(faces)) * 100
                     progress_callback(face, status, progress)
 
-                time.sleep(1.0 if terminal_data.card_event else 3.1)
+                time.sleep(3.1)
 
             except Exception as e:
                 self.logger.error(f"Error processing {face}: {str(e)}")
@@ -121,7 +118,7 @@ class LunaFast4ASender(DeviceSender):
         body = self.get_card_body(card=card)
         body = json.dumps(body)
         data = self.HIK_CARD_BODY_TEMPLATE.format(body=body).encode()
-        return self.make_request(body=data)
+        self.make_request(body=data)
 
     def make_request(self, body: dict | bytes) -> int:
         response = requests.request(method='POST', url=self._url, data=body)
