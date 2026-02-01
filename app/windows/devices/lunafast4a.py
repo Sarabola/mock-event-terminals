@@ -5,10 +5,13 @@ from app.db import db_helper
 from app.devices.lunafast4a import LunaFast4ASender
 from app.theme import COLORS, STYLES
 from app.windows.abc import DeviceWindow, Window
+from app.windows.devices.models import LunaFastData
 from app.windows.devices.settings_with_temperature import \
     DeviceWithTemperatureSettingsWindow
 from app.windows.select_photo import SelectPhotosWindow
 from app.windows.send_status_window import SendStatusWindow
+
+
 
 
 class LunaFast4AWindow(DeviceWindow, Window):
@@ -19,7 +22,6 @@ class LunaFast4AWindow(DeviceWindow, Window):
         Window.__init__(self, master, None)
         self.sender = LunaFast4ASender()
 
-        self.temperature_enabled = tk.BooleanVar()
         self.card_event = tk.BooleanVar()
         self._load_settings()
 
@@ -27,19 +29,16 @@ class LunaFast4AWindow(DeviceWindow, Window):
         """Load settings from database."""
         device_data = db_helper.get_device_by_name(self.TERMINAL_NAME)
         if device_data:
-            self.temperature_enabled.set(device_data.get("temperature_enabled", False))
             self.card_event.set(device_data.get("card_event", False))
 
     def _save_settings(self):
         """Save current settings to database."""
         device_data = db_helper.get_device_by_name(self.TERMINAL_NAME) or {}
         device_data.update({
-            "temperature_enabled": self.temperature_enabled.get(),
             "card_event": self.card_event.get()
         })
 
-        with open(db_helper.db_path, "r") as f:
-            data = json.load(f)
+        data = db_helper.get_data()
         data["terminals"][self.TERMINAL_NAME] = device_data
         with open(db_helper.db_path, "w") as f:
             json.dump(data, f, indent=2)
@@ -57,16 +56,19 @@ class LunaFast4AWindow(DeviceWindow, Window):
         self._save_settings()
 
         status_window = SendStatusWindow(self.master, self.TERMINAL_NAME)
-
+        terminal = self.get_terminal()
         def send_photos_callback(selected_photos, progress_callback):
             return self.sender.make_selected_photos_request(
-                selected_photos,
-                progress_callback,
-                temperature_enabled=self.temperature_enabled.get(),
-                card_event=self.card_event.get()
+                faces=selected_photos,
+                progress_callback=progress_callback,
+                terminal_data=terminal
             )
 
         status_window.show_status(send_photos_callback)
+
+    def get_terminal(self) -> LunaFastData:
+        terminal_data = db_helper.get_device_by_name(self.TERMINAL_NAME)
+        return LunaFastData(**terminal_data)
 
     def _create_photos_preview(self, parent_frame):
         """Create a frame to display selected photos that will be sent."""

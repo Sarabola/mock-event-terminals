@@ -7,6 +7,7 @@ from random import choice, randint
 import requests
 
 from app.devices.abc import DeviceSender
+from app.windows.devices.models import BewardData
 
 
 class BewardSender(DeviceSender):
@@ -15,17 +16,20 @@ class BewardSender(DeviceSender):
     def make_selected_photos_request(
             self,
             faces: list[str],
+            terminal: BewardData,
             progress_callback=None,
-            temperature_enabled: bool = False,
-            old_event: bool = False,
-            above_normal_temp: bool = False,
-            abnormal_temp: bool = False
     ) -> dict[str, int]:
         result = {}
         for i, face in enumerate(faces):
             face_path = self._IMAGES_PATH.joinpath(face)
             try:
-                body = self.get_beward_body(face_path, temperature_enabled, above_normal_temp, abnormal_temp, old_event)
+                body = self.get_beward_body(
+                    face_path,
+                    enable_temp=terminal.temperature_enabled,
+                    above_normal_temp=terminal.above_normal_temp,
+                    abnormal_temp=terminal.abnormal_temp,
+                    old_event=terminal.old_event
+                )
                 status = self.make_request(body)
                 result[face] = status
 

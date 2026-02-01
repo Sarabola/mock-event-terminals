@@ -6,6 +6,7 @@ from random import choice, randint
 import requests
 
 from app.devices.abc import DeviceSender
+from app.windows.devices.models import LunaFastData
 
 
 class LunaFast4ASender(DeviceSender):
@@ -59,23 +60,22 @@ class LunaFast4ASender(DeviceSender):
     def make_selected_photos_request(
             self,
             faces: list[str],
+            terminal_data: LunaFastData,
             progress_callback=None,
-            temperature_enabled=False,
-            card_event=False
     ) -> dict[str, int]:
         result = {}
 
         for i, face in enumerate(faces):
             try:
-                if card_event:
+                if terminal_data.card_event:
                     status = self.make_card_request()
                 else:
                     face_path = self._IMAGES_PATH.joinpath(face)
                     face_bytes = face_path.read_bytes()
-                    if temperature_enabled:
-                        status = self.make_face_request_with_temperature(face_bytes)
+                    if terminal_data.temperature_enabled:
+                        status = self.make_face_request_with_temperature(face_bytes, terminal=terminal_data)
                     else:
-                        status = self.make_face_request(face_bytes)
+                        status = self.make_face_request(face_bytes, terminal=terminal_data)
 
                 result[face] = status
 
@@ -83,7 +83,7 @@ class LunaFast4ASender(DeviceSender):
                     progress = ((i + 1) / len(faces)) * 100
                     progress_callback(face, status, progress)
 
-                time.sleep(1.0 if card_event else 3.1)
+                time.sleep(1.0 if terminal_data.card_event else 3.1)
 
             except Exception as e:
                 self.logger.error(f"Error processing {face}: {str(e)}")
@@ -96,17 +96,21 @@ class LunaFast4ASender(DeviceSender):
         self.logger.info("Sending successfully end.")
         return result
 
-    def make_face_request_with_temperature(self, face: bytes) -> int:
+    def make_face_request_with_temperature(self, face: bytes, terminal: LunaFastData) -> int:
         """Send face request with temperature data."""
-        face_body = self.get_face_body_with_temperature()
+        face_body = self.get_face_body_with_temperature(
+            old_event=terminal.old_event,
+            abnormal_temp=terminal.abnormal_temp,
+            above_normal_temp=terminal.above_normal_temp,
+        )
         face_body = json.dumps(face_body)
         template_data = self.HIK_FACE_BODY_TEMPLATE.format(body=face_body)
         face_data = template_data.encode() + face
         return self.make_request(body=face_data)
 
-    def make_face_request(self, face: bytes):
+    def make_face_request(self, face: bytes, terminal: LunaFastData):
         """Send face request without temperature."""
-        face_body = self.get_face_body()
+        face_body = self.get_face_body(old_event=terminal.old_event)
         face_body = json.dumps(face_body)
         template_data = self.HIK_FACE_BODY_TEMPLATE.format(body=face_body)
         face_data = template_data.encode() + face
