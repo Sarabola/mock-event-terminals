@@ -28,15 +28,15 @@ class SendStatusWindow:
         self.window.title(f"Sending Photos - {self.device_name}")
         self.window.geometry("300x300")
         self.window.configure(bg=COLORS["bg_primary"])
-        self.window.resizable(False, False)
+        self.window.resizable(False, True)
 
         self.window.transient(self.master)
         self.window.grab_set()
 
         self.window.update_idletasks()
         x = (self.window.winfo_screenwidth() // 2) - (600 // 2)
-        y = (self.window.winfo_screenheight() // 2) - (400 // 2)
-        self.window.geometry(f"600x400+{x}+{y}")
+        y = (self.window.winfo_screenheight() // 2) - (700 // 2)
+        self.window.geometry(f"600x700+{x}+{y}")
 
         main_frame = tk.Frame(self.window, bg=COLORS["bg_primary"])
         main_frame.pack(expand=True, fill="both", padx=20, pady=20)
@@ -87,14 +87,25 @@ class SendStatusWindow:
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        self.close_button = tk.Button(
-            main_frame,
-            text="Close",
-            command=self._close_window,
+        buttons_frame = tk.Frame(main_frame, bg=COLORS["bg_primary"])
+        buttons_frame.pack(pady=(20, 0))
+
+        self.repeat_button = tk.Button(
+            buttons_frame,
+            text="Repeat",
+            command=self._repeat_sending,
             state="disabled",
             **STYLES["button"]
         )
-        self.close_button.pack(pady=(20, 0))
+        self.repeat_button.pack(side="left", padx=(0, 10))
+
+        self.exit_button = tk.Button(
+            buttons_frame,
+            text="Exit",
+            command=self._close_window,
+            **STYLES["button"]
+        )
+        self.exit_button.pack(side="left")
 
         style = ttk.Style()
         style.theme_use('clam')
@@ -143,7 +154,6 @@ class SendStatusWindow:
         result_frame = tk.Frame(self.results_frame, bg=COLORS["bg_secondary"])
         result_frame.pack(fill="x", pady=2, padx=5)
 
-        # Status icon and text
         if status == 200:
             icon = "✅"
             color = COLORS["success"]
@@ -162,7 +172,6 @@ class SendStatusWindow:
         )
         status_label.pack(side="left")
 
-        # Status code
         status_code_label = tk.Label(
             result_frame,
             text=f"Status: {status}",
@@ -181,8 +190,24 @@ class SendStatusWindow:
         self.is_sending = False
         self.window.after(0, self._enable_close_button)
 
+    def _repeat_sending(self):
+        """Repeat the sending process without clearing the window."""
+        # Reset progress and status
+        self.progress_var.set(0)
+        self.status_label.config(text="Preparing to send...")
+
+        for widget in self.results_frame.winfo_children():
+            widget.destroy()
+        
+        self.results = {}
+
+        self.repeat_button.config(state="disabled")
+
+        thread = Thread(target=self._send_photos, daemon=True)
+        thread.start()
+
     def _enable_close_button(self):
-        """Enable close button and update final status."""
+        """Enable repeat button and update final status."""
         self.progress_var.set(100)
 
         successful = sum(1 for status in self.results.values() if status == 200)
@@ -194,7 +219,7 @@ class SendStatusWindow:
             final_status = "No photos were sent"
 
         self.status_label.config(text=final_status)
-        self.close_button.config(state="normal")
+        self.repeat_button.config(state="normal")
 
     def _close_window(self):
         """Close the status window."""
