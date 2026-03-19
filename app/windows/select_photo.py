@@ -94,6 +94,10 @@ class SelectPhotosWindow(Window):
             if file.name in actual_data["images"]:
                 continue
             actual_data["images"][file.name] = False
+        for file in images.glob("*.jpeg"):
+            if file.name in actual_data["images"]:
+                continue
+            actual_data["images"][file.name] = False
         for file in list(actual_data["images"].keys()):
             file_path = images.joinpath(file)
             if file_path.exists():
