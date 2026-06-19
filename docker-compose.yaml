@@ -1,11 +1,28 @@
 services:
-  mock-terminal:
-    build: .
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      network: host
     environment:
-      - DISPLAY=${DISPLAY}
+      DATABASE_URL: sqlite+aiosqlite:////app/data/app.db
+      IMAGES_PATH: /app/images
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      AUTH_SECRET_KEY: change-this-in-internal-deploy
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ./data:/app/data
       - ./images:/app/images
-    network_mode: host
-    stdin_open: true
-    tty: true
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      network: host
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend

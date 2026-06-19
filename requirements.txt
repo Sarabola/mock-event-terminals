@@ -1,3 +1,4 @@
+aiosqlite==0.20.0
 annotated-types==0.7.0
 black==26.1.0
 certifi==2026.1.4
@@ -11,11 +12,16 @@ packaging==26.0
 pathspec==1.0.4
 platformdirs==4.5.1
 pydantic==2.12.5
+pydantic-settings==2.7.1
 pydantic_core==2.41.5
+pytest==8.3.4
 python-dotenv==1.2.1
 pytokens==0.4.1
 requests==2.32.5
 ruff==0.14.14
+fastapi==0.115.6
+SQLAlchemy==2.0.36
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.3
+uvicorn[standard]==0.34.0
