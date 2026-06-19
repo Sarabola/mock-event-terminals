@@ -5,7 +5,7 @@ from app.db import db_helper
 
 
 class DeviceSender(ABC):
-    _ENDPOINT_TEMPLATE = "vl-access/webhook/device/{component_id}/event/handle_event"
+    _ENDPOINT_TEMPLATE = "vl-access/webhook/device/{component_id}/event/handle_event/"
     _URL_TEMPLATE = "http://{host}:{port}/"
     _IMAGES_PATH = project_settings.images_path
 

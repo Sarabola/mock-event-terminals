@@ -33,6 +33,10 @@ class LunaFast4ASender(DeviceSender):
         }
 
     def get_face_body(self, major_code: str = "5", minor_code: str = "75", old_event: bool = False):
+        """
+        minor-code: 140 ----> liveness = False
+        minor-code: 75 -----> good event
+        """
         return self._get_base_body(major_code=major_code, minor_code=minor_code, old_event=old_event)
 
     def get_card_body(self, major_code: str = "5", minor_code: str = "0", card: str = "07925127",
