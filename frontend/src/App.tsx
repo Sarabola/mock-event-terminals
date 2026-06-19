@@ -21,6 +21,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<string>("");
   const [error, setError] = useState<string>("");
 
@@ -103,6 +104,7 @@ export default function App() {
       setNetworkDraft(networkData);
       setDevices(devicesData);
       setImages(imagesData);
+      setRenameDrafts(Object.fromEntries(imagesData.map((image) => [image.name, image.name])));
       setSelectedDeviceName(devicesData[0]?.name ?? "");
     } catch (err) {
       setError(formatError(err));
@@ -138,6 +140,7 @@ export default function App() {
     try {
       const refreshed = await api.refreshImages();
       setImages(refreshed);
+      setRenameDrafts(Object.fromEntries(refreshed.map((image) => [image.name, image.name])));
       setNotice("Image list refreshed");
     } catch (err) {
       setError(formatError(err));
@@ -149,6 +152,7 @@ export default function App() {
       const payload = Object.fromEntries(nextImages.map((image) => [image.name, image.selected]));
       const saved = await api.updateImages(payload);
       setImages(saved);
+      setRenameDrafts(Object.fromEntries(saved.map((image) => [image.name, image.name])));
       setNotice("Photo selection saved");
     } catch (err) {
       setError(formatError(err));
@@ -163,6 +167,7 @@ export default function App() {
       const payload = Object.fromEntries(images.map((image) => [image.name, image.selected]));
       const savedImages = await api.updateImages(payload);
       setImages(savedImages);
+      setRenameDrafts(Object.fromEntries(savedImages.map((image) => [image.name, image.name])));
       const job = await api.startSending(selectedDevice.name);
       setSendJob(job);
       setNotice("Sending started");
@@ -198,6 +203,42 @@ export default function App() {
     setImages((current) =>
       current.map((image) => (image.name === imageName ? { ...image, selected } : image))
     );
+  }
+
+  async function uploadPhoto(file: File | null) {
+    if (!file) return;
+    try {
+      const updated = await api.uploadImage(file);
+      setImages(updated);
+      setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
+      setNotice("Photo uploaded");
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
+  async function deletePhoto(imageName: string) {
+    try {
+      const updated = await api.deleteImage(imageName);
+      setImages(updated);
+      setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
+      setNotice("Photo deleted");
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
+  async function renamePhoto(imageName: string) {
+    const newName = renameDrafts[imageName]?.trim();
+    if (!newName || newName === imageName) return;
+    try {
+      const updated = await api.renameImage(imageName, newName);
+      setImages(updated);
+      setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
+      setNotice("Photo renamed");
+    } catch (err) {
+      setError(formatError(err));
+    }
   }
 
   const selectedCount = images.filter((image) => image.selected).length;
@@ -415,6 +456,17 @@ export default function App() {
             <div className="section-heading">
               <h2>Photos</h2>
               <div className="toolbar">
+                <label className="file-button">
+                  <span>Upload</span>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    onChange={(event) => {
+                      void uploadPhoto(event.target.files?.[0] ?? null);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
                 <button onClick={refreshImages}>Refresh</button>
                 <button onClick={() => saveImageSelection()}>Save Selection</button>
               </div>
@@ -423,14 +475,32 @@ export default function App() {
             <div className="image-table">
               {images.length === 0 && <p className="empty">No images found in mounted images directory.</p>}
               {images.map((image) => (
-                <label className="image-row" key={image.name}>
-                  <input
-                    type="checkbox"
-                    checked={image.selected}
-                    onChange={(event) => toggleImage(image.name, event.target.checked)}
-                  />
-                  <span>{image.name}</span>
-                </label>
+                <div className="image-row" key={image.name}>
+                  <label className="image-select">
+                    <input
+                      type="checkbox"
+                      checked={image.selected}
+                      onChange={(event) => toggleImage(image.name, event.target.checked)}
+                    />
+                    <img src={api.imageUrl(image.name)} alt={image.name} />
+                  </label>
+                  <div className="image-details">
+                    <span className="image-name">{image.name}</span>
+                    <div className="rename-row">
+                      <input
+                        value={renameDrafts[image.name] ?? image.name}
+                        onChange={(event) =>
+                          setRenameDrafts((current) => ({ ...current, [image.name]: event.target.value }))
+                        }
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") void renamePhoto(image.name);
+                        }}
+                      />
+                      <button onClick={() => renamePhoto(image.name)}>Rename</button>
+                      <button onClick={() => deletePhoto(image.name)}>Delete</button>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </section>

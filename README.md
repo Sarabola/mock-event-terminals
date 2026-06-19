@@ -15,6 +15,7 @@
   - R20
   - Beward
 - Поддержка папки `images` для `.jpg`, `.jpeg`, `.png`.
+- Просмотр, загрузка, удаление и переименование изображений из веб-интерфейса.
 - Docker Compose запуск backend/frontend.
 
 ## Запуск
@@ -56,11 +57,11 @@ http://localhost:8000/docs
 3. Выберите устройство в списке слева.
 4. Укажите `device_id` и дополнительные параметры устройства.
 5. Положите изображения в папку `images`.
-6. Нажмите `Refresh` в блоке Photos.
-7. Выберите изображения и сохраните выбор.
+6. Нажмите `Refresh` в блоке Photos или загрузите новые изображения через `Upload`.
+7. Выберите изображения, при необходимости переименуйте или удалите старые, и сохраните выбор.
 8. Нажмите `Send Photos` и отслеживайте прогресс.
 
-Настройки сети, устройств, выбор фото и история отправок сохраняются отдельно для каждого пользователя.
+Каталог изображений общий для всех пользователей. Настройки сети, устройств, выбор фото и история отправок сохраняются отдельно для каждого пользователя.
 
 ## Docker volumes
 
@@ -79,6 +80,10 @@ http://localhost:8000/docs
 - `PUT /api/devices/{device_name}/settings`
 - `GET /api/images`
 - `POST /api/images/refresh`
+- `GET /api/images/{image_name}/content`
+- `POST /api/images/upload`
+- `DELETE /api/images/{image_name}`
+- `PUT /api/images/{image_name}/rename`
 - `PUT /api/images`
 - `POST /api/devices/{device_name}/send`
 - `GET /api/send-jobs/{job_id}`

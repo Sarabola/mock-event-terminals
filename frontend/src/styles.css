@@ -205,7 +205,7 @@ label span {
 }
 
 .check-row input,
-.image-row input {
+.image-select input {
   width: 18px;
   min-height: 18px;
   flex: 0 0 auto;
@@ -241,29 +241,92 @@ label span {
   flex-wrap: wrap;
 }
 
+.file-button {
+  min-height: 36px;
+  border: 1px solid #b8c5c9;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #172024;
+  cursor: pointer;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.file-button span {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+}
+
+.file-button input {
+  display: none;
+}
+
 .photo-summary {
   color: #59676c;
   margin-bottom: 8px;
 }
 
 .image-table {
-  max-height: 260px;
+  max-height: 420px;
   overflow: auto;
   border: 1px solid #d9e1e4;
   border-radius: 6px;
 }
 
 .image-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 38px;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 96px;
   border-bottom: 1px solid #edf1f2;
-  padding: 8px 10px;
+  padding: 10px;
 }
 
 .image-row:last-child {
   border-bottom: 0;
+}
+
+.image-select {
+  display: grid;
+  grid-template-columns: 18px 64px;
+  gap: 8px;
+  align-items: center;
+}
+
+.image-select img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border: 1px solid #d9e1e4;
+  border-radius: 6px;
+  background: #eef2f3;
+}
+
+.image-details {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.image-name {
+  color: #172024;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rename-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+}
+
+.rename-row input {
+  width: 100%;
+  min-height: 36px;
 }
 
 .empty {
@@ -432,5 +495,24 @@ label span {
   .toolbar button,
   .section-heading button {
     width: 100%;
+  }
+
+  .file-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .image-row,
+  .rename-row {
+    grid-template-columns: 1fr;
+  }
+
+  .image-select {
+    grid-template-columns: 18px 72px;
+  }
+
+  .image-select img {
+    width: 72px;
+    height: 72px;
   }
 }

@@ -80,6 +80,10 @@ class BulkImageSelectionUpdate(BaseModel):
     images: dict[str, bool]
 
 
+class ImageRenameRequest(BaseModel):
+    new_name: str = Field(min_length=1, max_length=255)
+
+
 class SendJobRead(BaseModel):
     id: int
     device_name: str

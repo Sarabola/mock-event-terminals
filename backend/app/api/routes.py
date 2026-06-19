@@ -1,4 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,7 @@ from backend.app.schemas.schemas import (
     DeviceSettingsRead,
     DeviceSettingsUpdate,
     ImageFileRead,
+    ImageRenameRequest,
     ImageSelectionUpdate,
     NetworkSettingsRead,
     NetworkSettingsUpdate,
@@ -23,8 +25,8 @@ from backend.app.schemas.schemas import (
     SendJobRead,
     UserRead,
 )
-from backend.app.services.auth import create_access_token, hash_password, verify_password
-from backend.app.services.images import refresh_images
+from backend.app.services.auth import create_access_token, hash_password, parse_access_token, verify_password
+from backend.app.services.images import delete_image, image_path, refresh_images, rename_image, upload_image
 from backend.app.services.sending import create_send_job, get_job_payload, run_send_job, send_card_event
 
 router = APIRouter(prefix="/api")
@@ -164,6 +166,47 @@ async def refresh_image_list(
     session: AsyncSession = Depends(get_session),
 ) -> list[ImageSelection]:
     return await refresh_images(session, get_settings().images_path, current_user.id)
+
+
+@router.get("/images/{image_name}/content")
+async def get_image_content(
+    image_name: str,
+    token: str,
+    session: AsyncSession = Depends(get_session),
+) -> FileResponse:
+    user_id = parse_access_token(token)
+    if user_id is None or await session.get(User, user_id) is None:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    path = image_path(get_settings().images_path, image_name)
+    return FileResponse(path)
+
+
+@router.post("/images/upload", response_model=list[ImageFileRead])
+async def upload_new_image(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+    file: UploadFile = File(...),
+) -> list[ImageSelection]:
+    return await upload_image(session, get_settings().images_path, current_user.id, file)
+
+
+@router.delete("/images/{image_name}", response_model=list[ImageFileRead])
+async def delete_existing_image(
+    image_name: str,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[ImageSelection]:
+    return await delete_image(session, get_settings().images_path, current_user.id, image_name)
+
+
+@router.put("/images/{image_name}/rename", response_model=list[ImageFileRead])
+async def rename_existing_image(
+    image_name: str,
+    payload: ImageRenameRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+) -> list[ImageSelection]:
+    return await rename_image(session, get_settings().images_path, current_user.id, image_name, payload.new_name)
 
 
 @router.put("/images/{image_name}", response_model=ImageFileRead)

@@ -16,9 +16,10 @@ export function setStoredToken(token: string | null) {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isFormData = init?.body instanceof FormData;
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(getStoredToken() ? { Authorization: `Bearer ${getStoredToken()}` } : {}),
       ...(init?.headers ?? {})
     },
@@ -49,6 +50,20 @@ export const api = {
   refreshImages: () => request<ImageFile[]>("/images/refresh", { method: "POST" }),
   updateImages: (images: Record<string, boolean>) =>
     request<ImageFile[]>("/images", { method: "PUT", body: JSON.stringify({ images }) }),
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request<ImageFile[]>("/images/upload", { method: "POST", body: formData });
+  },
+  deleteImage: (imageName: string) =>
+    request<ImageFile[]>(`/images/${encodeURIComponent(imageName)}`, { method: "DELETE" }),
+  renameImage: (imageName: string, newName: string) =>
+    request<ImageFile[]>(`/images/${encodeURIComponent(imageName)}/rename`, {
+      method: "PUT",
+      body: JSON.stringify({ new_name: newName })
+    }),
+  imageUrl: (imageName: string) =>
+    `${API_BASE}/images/${encodeURIComponent(imageName)}/content?token=${encodeURIComponent(getStoredToken() ?? "")}`,
   startSending: (deviceName: string) => request<SendJob>(`/devices/${deviceName}/send`, { method: "POST" }),
   getSendJob: (jobId: number) => request<SendJob>(`/send-jobs/${jobId}`),
   sendCardEvent: (deviceName: string, cardNumber: string) =>
