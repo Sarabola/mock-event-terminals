@@ -56,7 +56,14 @@ class LunaFast4ASender(DeviceSender):
             },
         }
 
-    def get_face_body(self, major_code: str = "5", minor_code: str = "75", old_event: bool = False) -> dict:
+    def get_face_body(
+        self,
+        major_code: str = "5",
+        minor_code: str = "75",
+        old_event: bool = False,
+        liveness: bool = True,
+    ) -> dict:
+        minor_code = "75" if liveness else "140"
         return self._get_base_body(major_code=major_code, minor_code=minor_code, old_event=old_event)
 
     def get_card_body(
@@ -75,6 +82,7 @@ class LunaFast4ASender(DeviceSender):
         old_event: bool = False,
         above_normal_temp: bool = False,
         abnormal_temp: bool = False,
+        liveness: bool = True,
     ) -> dict:
         if above_normal_temp:
             temperature = str(randint(370, 413) / 10)
@@ -82,7 +90,7 @@ class LunaFast4ASender(DeviceSender):
             temperature = str(choice([randint(330, 360) / 10, randint(414, 435) / 10]))
         else:
             temperature = str(randint(361, 369) / 10)
-        body = self.get_face_body(old_event=old_event)
+        body = self.get_face_body(old_event=old_event, liveness=liveness)
         body["AccessControllerEvent"]["currTemperature"] = temperature
         return body
 
@@ -91,12 +99,13 @@ class LunaFast4ASender(DeviceSender):
             old_event=terminal.old_event,
             abnormal_temp=terminal.abnormal_temp,
             above_normal_temp=terminal.above_normal_temp,
+            liveness=terminal.liveness_enabled,
         )
         template_data = self.HIK_FACE_BODY_TEMPLATE.format(body=json.dumps(face_body))
         return self._post_data(template_data.encode() + face)
 
     def make_face_request(self, face: bytes, terminal: DeviceRuntimeSettings) -> int:
-        face_body = self.get_face_body(old_event=terminal.old_event)
+        face_body = self.get_face_body(old_event=terminal.old_event, liveness=terminal.liveness_enabled)
         template_data = self.HIK_FACE_BODY_TEMPLATE.format(body=json.dumps(face_body))
         return self._post_data(template_data.encode() + face)
 

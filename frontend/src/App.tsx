@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { api, getStoredToken, setStoredToken } from "./api/client";
-import type { Device, DeviceSettings, ImageFile, NetworkSettings, SendJob, User } from "./types/domain";
+import type { Device, DeviceSettings, ImageFile, NetworkSettings, PhotoScope, SendJob, User } from "./types/domain";
 
 const emptyNetwork: NetworkSettings = { host: "localhost", port: 9091 };
 
@@ -16,6 +16,7 @@ export default function App() {
   const [selectedDeviceName, setSelectedDeviceName] = useState<string>("");
   const [deviceDraft, setDeviceDraft] = useState<DeviceSettings | null>(null);
   const [images, setImages] = useState<ImageFile[]>([]);
+  const [photoScope, setPhotoScope] = useState<PhotoScope>("all");
   const [sendJob, setSendJob] = useState<SendJob | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
@@ -99,7 +100,7 @@ export default function App() {
       const [networkData, devicesData, imagesData] = await Promise.all([
         api.getNetwork(),
         api.getDevices(),
-        api.refreshImages()
+        api.refreshImages(photoScope)
       ]);
       setNetwork(networkData);
       setNetworkDraft(networkData);
@@ -139,7 +140,7 @@ export default function App() {
 
   async function refreshImages() {
     try {
-      const refreshed = await api.refreshImages();
+      const refreshed = await api.refreshImages(photoScope);
       setImages(refreshed);
       setRenameDrafts(Object.fromEntries(refreshed.map((image) => [image.name, image.name])));
       setNotice("Image list refreshed");
@@ -151,7 +152,7 @@ export default function App() {
   async function saveImageSelection(nextImages = images) {
     try {
       const payload = Object.fromEntries(nextImages.map((image) => [image.name, image.selected]));
-      const saved = await api.updateImages(payload);
+      const saved = await api.updateImages(payload, photoScope);
       setImages(saved);
       setRenameDrafts(Object.fromEntries(saved.map((image) => [image.name, image.name])));
       setNotice("Photo selection saved");
@@ -166,7 +167,7 @@ export default function App() {
       const updated = await api.updateDeviceSettings(selectedDevice.name, deviceDraft);
       setDevices((current) => current.map((device) => (device.name === updated.name ? updated : device)));
       const payload = Object.fromEntries(images.map((image) => [image.name, image.selected]));
-      const savedImages = await api.updateImages(payload);
+      const savedImages = await api.updateImages(payload, photoScope);
       setImages(savedImages);
       setRenameDrafts(Object.fromEntries(savedImages.map((image) => [image.name, image.name])));
       const job = await api.startSending(selectedDevice.name);
@@ -210,10 +211,22 @@ export default function App() {
     setImages((current) => current.map((image) => ({ ...image, selected })));
   }
 
+  async function changePhotoScope(scope: PhotoScope) {
+    try {
+      setPhotoScope(scope);
+      const refreshed = await api.refreshImages(scope);
+      setImages(refreshed);
+      setRenameDrafts(Object.fromEntries(refreshed.map((image) => [image.name, image.name])));
+      setEditingImageName(null);
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
   async function uploadPhoto(file: File | null) {
     if (!file) return;
     try {
-      const updated = await api.uploadImage(file);
+      const updated = await api.uploadImage(file, photoScope);
       setImages(updated);
       setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
       setNotice("Photo uploaded");
@@ -224,7 +237,7 @@ export default function App() {
 
   async function deletePhoto(imageName: string) {
     try {
-      const updated = await api.deleteImage(imageName);
+      const updated = await api.deleteImage(imageName, photoScope);
       setImages(updated);
       setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
       setEditingImageName(null);
@@ -238,7 +251,7 @@ export default function App() {
     const newName = renameDrafts[imageName]?.trim();
     if (!newName || newName === imageName) return;
     try {
-      const updated = await api.renameImage(imageName, newName);
+      const updated = await api.renameImage(imageName, newName, photoScope);
       setImages(updated);
       setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
       setEditingImageName(null);
@@ -433,6 +446,16 @@ export default function App() {
                       />
                       <span>Old event date</span>
                     </label>
+                    {selectedDevice.supports_liveness && (
+                      <label className="check-row">
+                        <input
+                          type="checkbox"
+                          checked={deviceDraft.liveness_enabled}
+                          onChange={(event) => patchDeviceDraft({ liveness_enabled: event.target.checked })}
+                        />
+                        <span>Liveness event</span>
+                      </label>
+                    )}
                   </div>
                 )}
 
@@ -475,6 +498,20 @@ export default function App() {
                   />
                 </label>
                 <button onClick={refreshImages}>Refresh</button>
+                <div className="photo-filter" aria-label="Photo filter">
+                  <button
+                    className={photoScope === "all" ? "active" : ""}
+                    onClick={() => void changePhotoScope("all")}
+                  >
+                    All Photos
+                  </button>
+                  <button
+                    className={photoScope === "mine" ? "active" : ""}
+                    onClick={() => void changePhotoScope("mine")}
+                  >
+                    My Uploads
+                  </button>
+                </div>
                 <button onClick={() => setAllImagesSelected(true)} disabled={images.length === 0}>
                   Select All
                 </button>
@@ -529,6 +566,7 @@ export default function App() {
                         <span className="image-name" title={image.name}>
                           {image.name}
                         </span>
+                        {image.uploaded_by_me && <span className="mine-badge">Mine</span>}
                         <button
                           className="compact-action"
                           onClick={() => {

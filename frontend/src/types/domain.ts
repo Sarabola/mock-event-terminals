@@ -20,6 +20,7 @@ export type DeviceSettings = {
   above_normal_temp: boolean;
   abnormal_temp: boolean;
   old_event: boolean;
+  liveness_enabled: boolean;
   card_event: boolean;
   card_number: string;
 };
@@ -29,13 +30,18 @@ export type Device = {
   title: string;
   supports_temperature: boolean;
   supports_card: boolean;
+  supports_liveness: boolean;
   settings: DeviceSettings;
 };
 
 export type ImageFile = {
   name: string;
   selected: boolean;
+  uploaded_by_user_id?: number | null;
+  uploaded_by_me: boolean;
 };
+
+export type PhotoScope = "all" | "mine";
 
 export type SendResult = {
   image_name: string;

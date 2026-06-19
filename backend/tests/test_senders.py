@@ -45,6 +45,13 @@ def test_lunafast4a_card_body_contains_card_number(tmp_path: Path) -> None:
     assert body["AccessControllerEvent"]["majorEventType"] == "5"
 
 
+def test_lunafast4a_liveness_changes_minor_code(tmp_path: Path) -> None:
+    sender = LunaFast4ASender(make_context(tmp_path))
+
+    assert sender.get_face_body(liveness=True)["AccessControllerEvent"]["subEventType"] == "75"
+    assert sender.get_face_body(liveness=False)["AccessControllerEvent"]["subEventType"] == "140"
+
+
 def test_hikvision_terminal_thermo_body_contains_temperature(tmp_path: Path) -> None:
     sender = HikvisionTerminalThermoSender(make_context(tmp_path))
     body = sender.get_face_body_with_temperature(old_event=False, above_normal_temp=True)
@@ -52,6 +59,13 @@ def test_hikvision_terminal_thermo_body_contains_temperature(tmp_path: Path) -> 
     assert body["AccessControllerEvent"]["majorEventType"] == "5"
     assert body["AccessControllerEvent"]["subEventType"] == "75"
     assert body["AccessControllerEvent"]["currTemperature"] is not None
+
+
+def test_hikvision_terminal_thermo_liveness_changes_minor_code(tmp_path: Path) -> None:
+    sender = HikvisionTerminalThermoSender(make_context(tmp_path))
+
+    assert sender.get_face_body(liveness=True)["AccessControllerEvent"]["subEventType"] == "75"
+    assert sender.get_face_body(liveness=False)["AccessControllerEvent"]["subEventType"] == "140"
 
 
 def test_hikvision_terminal_thermo_event_payload_contains_image_bytes(tmp_path: Path, monkeypatch) -> None:

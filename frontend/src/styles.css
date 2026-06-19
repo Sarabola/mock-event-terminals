@@ -241,6 +241,29 @@ label span {
   flex-wrap: wrap;
 }
 
+.photo-filter {
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  min-height: 36px;
+  border: 1px solid #b8c5c9;
+  border-radius: 6px;
+  background: #edf2f3;
+  padding: 3px;
+}
+
+.photo-filter button {
+  min-height: 28px;
+  border: 0;
+  background: transparent;
+  padding: 0 10px;
+}
+
+.photo-filter button.active {
+  background: #28706f;
+  color: #ffffff;
+}
+
 .file-button {
   min-height: 36px;
   border: 1px solid #b8c5c9;
@@ -319,9 +342,19 @@ label span {
 
 .image-view-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: 6px;
   align-items: center;
+}
+
+.mine-badge {
+  border: 1px solid #82bfa4;
+  border-radius: 999px;
+  color: #1f7a4d;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 7px;
+  white-space: nowrap;
 }
 
 .rename-row {
@@ -512,6 +545,10 @@ label span {
 
   .toolbar button,
   .section-heading button {
+    width: 100%;
+  }
+
+  .photo-filter {
     width: 100%;
   }
 

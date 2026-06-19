@@ -31,6 +31,7 @@ class Device(Base):
     title: Mapped[str] = mapped_column(String(128))
     supports_temperature: Mapped[bool] = mapped_column(Boolean, default=False)
     supports_card: Mapped[bool] = mapped_column(Boolean, default=False)
+    supports_liveness: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class DeviceSettings(Base):
@@ -45,10 +46,20 @@ class DeviceSettings(Base):
     above_normal_temp: Mapped[bool] = mapped_column(Boolean, default=False)
     abnormal_temp: Mapped[bool] = mapped_column(Boolean, default=False)
     old_event: Mapped[bool] = mapped_column(Boolean, default=False)
+    liveness_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     card_event: Mapped[bool] = mapped_column(Boolean, default=False)
     card_number: Mapped[str] = mapped_column(String(64), default="12345")
 
     device: Mapped[Device] = relationship()
+
+
+class ImageAsset(Base):
+    __tablename__ = "image_assets"
+
+    name: Mapped[str] = mapped_column(String(512), primary_key=True)
+    uploaded_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
 
 class ImageSelection(Base):

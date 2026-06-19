@@ -1,4 +1,13 @@
-import type { AuthResponse, Device, DeviceSettings, ImageFile, NetworkSettings, SendJob, User } from "../types/domain";
+import type {
+  AuthResponse,
+  Device,
+  DeviceSettings,
+  ImageFile,
+  NetworkSettings,
+  PhotoScope,
+  SendJob,
+  User
+} from "../types/domain";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api";
 const TOKEN_KEY = "mock-terminal-token";
@@ -46,19 +55,20 @@ export const api = {
   getDevices: () => request<Device[]>("/devices"),
   updateDeviceSettings: (deviceName: string, data: DeviceSettings) =>
     request<Device>(`/devices/${deviceName}/settings`, { method: "PUT", body: JSON.stringify(data) }),
-  getImages: () => request<ImageFile[]>("/images"),
-  refreshImages: () => request<ImageFile[]>("/images/refresh", { method: "POST" }),
-  updateImages: (images: Record<string, boolean>) =>
-    request<ImageFile[]>("/images", { method: "PUT", body: JSON.stringify({ images }) }),
-  uploadImage: (file: File) => {
+  getImages: (scope: PhotoScope = "all") => request<ImageFile[]>(`/images?scope=${scope}`),
+  refreshImages: (scope: PhotoScope = "all") =>
+    request<ImageFile[]>(`/images/refresh?scope=${scope}`, { method: "POST" }),
+  updateImages: (images: Record<string, boolean>, scope: PhotoScope = "all") =>
+    request<ImageFile[]>(`/images?scope=${scope}`, { method: "PUT", body: JSON.stringify({ images }) }),
+  uploadImage: (file: File, scope: PhotoScope = "all") => {
     const formData = new FormData();
     formData.append("file", file);
-    return request<ImageFile[]>("/images/upload", { method: "POST", body: formData });
+    return request<ImageFile[]>(`/images/upload?scope=${scope}`, { method: "POST", body: formData });
   },
-  deleteImage: (imageName: string) =>
-    request<ImageFile[]>(`/images/${encodeURIComponent(imageName)}`, { method: "DELETE" }),
-  renameImage: (imageName: string, newName: string) =>
-    request<ImageFile[]>(`/images/${encodeURIComponent(imageName)}/rename`, {
+  deleteImage: (imageName: string, scope: PhotoScope = "all") =>
+    request<ImageFile[]>(`/images/${encodeURIComponent(imageName)}?scope=${scope}`, { method: "DELETE" }),
+  renameImage: (imageName: string, newName: string, scope: PhotoScope = "all") =>
+    request<ImageFile[]>(`/images/${encodeURIComponent(imageName)}/rename?scope=${scope}`, {
       method: "PUT",
       body: JSON.stringify({ new_name: newName })
     }),

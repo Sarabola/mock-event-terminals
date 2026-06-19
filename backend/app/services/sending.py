@@ -21,6 +21,7 @@ def _settings_to_runtime(settings: DeviceSettings) -> DeviceRuntimeSettings:
         above_normal_temp=settings.above_normal_temp,
         abnormal_temp=settings.abnormal_temp,
         old_event=settings.old_event,
+        liveness_enabled=settings.liveness_enabled,
         card_event=settings.card_event,
         card_number=settings.card_number,
     )

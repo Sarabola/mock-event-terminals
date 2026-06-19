@@ -39,6 +39,7 @@ class DeviceSettingsRead(BaseModel):
     above_normal_temp: bool
     abnormal_temp: bool
     old_event: bool
+    liveness_enabled: bool
     card_event: bool
     card_number: str
 
@@ -51,6 +52,7 @@ class DeviceSettingsUpdate(BaseModel):
     above_normal_temp: bool = False
     abnormal_temp: bool = False
     old_event: bool = False
+    liveness_enabled: bool = True
     card_event: bool = False
     card_number: str = "12345"
 
@@ -60,6 +62,7 @@ class DeviceRead(BaseModel):
     title: str
     supports_temperature: bool
     supports_card: bool
+    supports_liveness: bool
     settings: DeviceSettingsRead
 
     model_config = ConfigDict(from_attributes=True)
@@ -68,6 +71,8 @@ class DeviceRead(BaseModel):
 class ImageFileRead(BaseModel):
     name: str
     selected: bool
+    uploaded_by_user_id: int | None = None
+    uploaded_by_me: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

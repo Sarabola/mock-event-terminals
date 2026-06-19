@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.app.api.deps import get_current_user
 from backend.app.core.config import get_settings
 from backend.app.db.session import get_session
-from backend.app.models.models import Device, DeviceSettings, ImageSelection, NetworkSettings, User
+from backend.app.models.models import Device, DeviceSettings, NetworkSettings, User
 from backend.app.schemas.schemas import (
     AuthRequest,
     AuthResponse,
@@ -26,7 +26,16 @@ from backend.app.schemas.schemas import (
     UserRead,
 )
 from backend.app.services.auth import create_access_token, hash_password, parse_access_token, verify_password
-from backend.app.services.images import delete_image, image_path, refresh_images, rename_image, upload_image
+from backend.app.services.images import (
+    delete_image,
+    image_path,
+    list_images,
+    refresh_images,
+    rename_image,
+    set_image_selection,
+    update_image_selections,
+    upload_image,
+)
 from backend.app.services.sending import create_send_job, get_job_payload, run_send_job, send_card_event
 
 router = APIRouter(prefix="/api")
@@ -137,6 +146,7 @@ async def update_device_settings(
     settings.above_normal_temp = payload.above_normal_temp and settings.temperature_enabled
     settings.abnormal_temp = payload.abnormal_temp and settings.temperature_enabled
     settings.old_event = payload.old_event
+    settings.liveness_enabled = payload.liveness_enabled if device.supports_liveness else True
     settings.card_event = payload.card_event and device.supports_card
     settings.card_number = payload.card_number
     await session.commit()
@@ -146,26 +156,20 @@ async def update_device_settings(
 
 @router.get("/images", response_model=list[ImageFileRead])
 async def get_images(
+    scope: str = Query(default="all"),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
-) -> list[ImageSelection]:
-    return list(
-        (
-            await session.scalars(
-                select(ImageSelection)
-                .where(ImageSelection.user_id == current_user.id)
-                .order_by(ImageSelection.name)
-            )
-        ).all()
-    )
+) -> list[dict]:
+    return await list_images(session, current_user.id, scope)
 
 
 @router.post("/images/refresh", response_model=list[ImageFileRead])
 async def refresh_image_list(
+    scope: str = Query(default="all"),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
-) -> list[ImageSelection]:
-    return await refresh_images(session, get_settings().images_path, current_user.id)
+) -> list[dict]:
+    return await refresh_images(session, get_settings().images_path, current_user.id, scope)
 
 
 @router.get("/images/{image_name}/content")
@@ -183,30 +187,33 @@ async def get_image_content(
 
 @router.post("/images/upload", response_model=list[ImageFileRead])
 async def upload_new_image(
+    scope: str = Query(default="all"),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
     file: UploadFile = File(...),
-) -> list[ImageSelection]:
-    return await upload_image(session, get_settings().images_path, current_user.id, file)
+) -> list[dict]:
+    return await upload_image(session, get_settings().images_path, current_user.id, file, scope)
 
 
 @router.delete("/images/{image_name}", response_model=list[ImageFileRead])
 async def delete_existing_image(
     image_name: str,
+    scope: str = Query(default="all"),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
-) -> list[ImageSelection]:
-    return await delete_image(session, get_settings().images_path, current_user.id, image_name)
+) -> list[dict]:
+    return await delete_image(session, get_settings().images_path, current_user.id, image_name, scope)
 
 
 @router.put("/images/{image_name}/rename", response_model=list[ImageFileRead])
 async def rename_existing_image(
     image_name: str,
     payload: ImageRenameRequest,
+    scope: str = Query(default="all"),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
-) -> list[ImageSelection]:
-    return await rename_image(session, get_settings().images_path, current_user.id, image_name, payload.new_name)
+) -> list[dict]:
+    return await rename_image(session, get_settings().images_path, current_user.id, image_name, payload.new_name, scope)
 
 
 @router.put("/images/{image_name}", response_model=ImageFileRead)
@@ -215,48 +222,24 @@ async def update_image_selection(
     payload: ImageSelectionUpdate,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
-) -> ImageSelection:
-    image = await session.scalar(
-        select(ImageSelection).where(
-            ImageSelection.user_id == current_user.id,
-            ImageSelection.name == image_name,
-        )
-    )
-    if image is None:
-        raise HTTPException(status_code=404, detail="Image not found")
-    image.selected = payload.selected
+) -> dict:
+    await set_image_selection(session, current_user.id, image_name, payload.selected)
     await session.commit()
-    await session.refresh(image)
-    return image
+    images = await list_images(session, current_user.id)
+    for image in images:
+        if image["name"] == image_name:
+            return image
+    raise HTTPException(status_code=404, detail="Image not found")
 
 
 @router.put("/images", response_model=list[ImageFileRead])
 async def update_bulk_image_selection(
     payload: BulkImageSelectionUpdate,
+    scope: str = Query(default="all"),
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
-) -> list[ImageSelection]:
-    images = list(
-        (
-            await session.scalars(
-                select(ImageSelection).where(ImageSelection.user_id == current_user.id)
-            )
-        ).all()
-    )
-    selection_by_name = payload.images
-    for image in images:
-        if image.name in selection_by_name:
-            image.selected = selection_by_name[image.name]
-    await session.commit()
-    return list(
-        (
-            await session.scalars(
-                select(ImageSelection)
-                .where(ImageSelection.user_id == current_user.id)
-                .order_by(ImageSelection.name)
-            )
-        ).all()
-    )
+) -> list[dict]:
+    return await update_image_selections(session, current_user.id, payload.images, scope)
 
 
 @router.post("/devices/{device_name}/send", response_model=SendJobRead)
@@ -358,5 +341,6 @@ def device_to_schema(device: Device, settings: DeviceSettings) -> DeviceRead:
         title=device.title,
         supports_temperature=device.supports_temperature,
         supports_card=device.supports_card,
+        supports_liveness=device.supports_liveness,
         settings=DeviceSettingsRead.model_validate(settings),
     )
