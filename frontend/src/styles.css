@@ -277,11 +277,11 @@ label span {
 
 .image-row {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 12px;
-  min-height: 96px;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 10px;
+  min-height: 58px;
   border-bottom: 1px solid #edf1f2;
-  padding: 10px;
+  padding: 7px 9px;
 }
 
 .image-row:last-child {
@@ -290,14 +290,14 @@ label span {
 
 .image-select {
   display: grid;
-  grid-template-columns: 18px 64px;
-  gap: 8px;
+  grid-template-columns: 18px 42px;
+  gap: 7px;
   align-items: center;
 }
 
 .image-select img {
-  width: 64px;
-  height: 64px;
+  width: 42px;
+  height: 42px;
   object-fit: cover;
   border: 1px solid #d9e1e4;
   border-radius: 6px;
@@ -308,7 +308,6 @@ label span {
   min-width: 0;
   display: grid;
   align-content: center;
-  gap: 8px;
 }
 
 .image-name {
@@ -318,15 +317,34 @@ label span {
   white-space: nowrap;
 }
 
+.image-view-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+}
+
 .rename-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
 }
 
 .rename-row input {
   width: 100%;
-  min-height: 36px;
+  min-height: 32px;
+}
+
+.compact-action,
+.rename-row button {
+  min-height: 32px;
+  padding: 0 10px;
+}
+
+.danger-action {
+  color: #9e2f2f;
+  border-color: #e2b5b5;
 }
 
 .empty {
@@ -503,16 +521,17 @@ label span {
   }
 
   .image-row,
+  .image-view-row,
   .rename-row {
     grid-template-columns: 1fr;
   }
 
   .image-select {
-    grid-template-columns: 18px 72px;
+    grid-template-columns: 18px 48px;
   }
 
   .image-select img {
-    width: 72px;
-    height: 72px;
+    width: 48px;
+    height: 48px;
   }
 }

@@ -1,5 +1,6 @@
 from backend.app.senders.base import DeviceContext, DeviceSender
 from backend.app.senders.beward import BewardSender
+from backend.app.senders.hikvision_terminal_thermo import HikvisionTerminalThermoSender
 from backend.app.senders.lunafast2nextgen import LunaFast2NextGenSender
 from backend.app.senders.lunafast4a import LunaFast4ASender
 from backend.app.senders.r20 import R20Sender
@@ -9,6 +10,7 @@ SENDER_BY_DEVICE: dict[str, type[DeviceSender]] = {
     "lunafast4a": LunaFast4ASender,
     "r20": R20Sender,
     "beward": BewardSender,
+    "hikvision_terminal_thermo": HikvisionTerminalThermoSender,
 }
 
 

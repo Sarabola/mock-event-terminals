@@ -2,8 +2,10 @@ from pathlib import Path
 
 from backend.app.senders.base import DeviceContext
 from backend.app.senders.beward import BewardSender
+from backend.app.senders.hikvision_terminal_thermo import HikvisionTerminalThermoSender
 from backend.app.senders.lunafast2nextgen import LunaFast2NextGenSender
 from backend.app.senders.lunafast4a import LunaFast4ASender
+from backend.app.senders.types import DeviceRuntimeSettings
 from backend.app.services.auth import create_access_token, hash_password, parse_access_token, verify_password
 
 
@@ -41,6 +43,31 @@ def test_lunafast4a_card_body_contains_card_number(tmp_path: Path) -> None:
 
     assert body["AccessControllerEvent"]["cardNo"] == "12345"
     assert body["AccessControllerEvent"]["majorEventType"] == "5"
+
+
+def test_hikvision_terminal_thermo_body_contains_temperature(tmp_path: Path) -> None:
+    sender = HikvisionTerminalThermoSender(make_context(tmp_path))
+    body = sender.get_face_body_with_temperature(old_event=False, above_normal_temp=True)
+
+    assert body["AccessControllerEvent"]["majorEventType"] == "5"
+    assert body["AccessControllerEvent"]["subEventType"] == "75"
+    assert body["AccessControllerEvent"]["currTemperature"] is not None
+
+
+def test_hikvision_terminal_thermo_event_payload_contains_image_bytes(tmp_path: Path, monkeypatch) -> None:
+    sender = HikvisionTerminalThermoSender(make_context(tmp_path))
+    captured = {}
+
+    def fake_post_data(body: bytes) -> int:
+        captured["body"] = body
+        return 200
+
+    monkeypatch.setattr(sender, "_post_data", fake_post_data)
+    status = sender.make_face_request(b"image-bytes", DeviceRuntimeSettings(temperature_enabled=True))
+
+    assert status == 200
+    assert captured["body"].startswith(b"Picture--MIME_boundary")
+    assert captured["body"].endswith(b"image-bytes")
 
 
 def test_password_hash_and_token_roundtrip() -> None:

@@ -22,6 +22,7 @@ export default function App() {
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
+  const [editingImageName, setEditingImageName] = useState<string | null>(null);
   const [notice, setNotice] = useState<string>("");
   const [error, setError] = useState<string>("");
 
@@ -205,6 +206,10 @@ export default function App() {
     );
   }
 
+  function setAllImagesSelected(selected: boolean) {
+    setImages((current) => current.map((image) => ({ ...image, selected })));
+  }
+
   async function uploadPhoto(file: File | null) {
     if (!file) return;
     try {
@@ -222,6 +227,7 @@ export default function App() {
       const updated = await api.deleteImage(imageName);
       setImages(updated);
       setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
+      setEditingImageName(null);
       setNotice("Photo deleted");
     } catch (err) {
       setError(formatError(err));
@@ -235,6 +241,7 @@ export default function App() {
       const updated = await api.renameImage(imageName, newName);
       setImages(updated);
       setRenameDrafts(Object.fromEntries(updated.map((image) => [image.name, image.name])));
+      setEditingImageName(null);
       setNotice("Photo renamed");
     } catch (err) {
       setError(formatError(err));
@@ -468,6 +475,12 @@ export default function App() {
                   />
                 </label>
                 <button onClick={refreshImages}>Refresh</button>
+                <button onClick={() => setAllImagesSelected(true)} disabled={images.length === 0}>
+                  Select All
+                </button>
+                <button onClick={() => setAllImagesSelected(false)} disabled={selectedCount === 0}>
+                  Clear
+                </button>
                 <button onClick={() => saveImageSelection()}>Save Selection</button>
               </div>
             </div>
@@ -485,20 +498,51 @@ export default function App() {
                     <img src={api.imageUrl(image.name)} alt={image.name} />
                   </label>
                   <div className="image-details">
-                    <span className="image-name">{image.name}</span>
-                    <div className="rename-row">
-                      <input
-                        value={renameDrafts[image.name] ?? image.name}
-                        onChange={(event) =>
-                          setRenameDrafts((current) => ({ ...current, [image.name]: event.target.value }))
-                        }
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") void renamePhoto(image.name);
-                        }}
-                      />
-                      <button onClick={() => renamePhoto(image.name)}>Rename</button>
-                      <button onClick={() => deletePhoto(image.name)}>Delete</button>
-                    </div>
+                    {editingImageName === image.name ? (
+                      <div className="rename-row">
+                        <input
+                          value={renameDrafts[image.name] ?? image.name}
+                          autoFocus
+                          onChange={(event) =>
+                            setRenameDrafts((current) => ({ ...current, [image.name]: event.target.value }))
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") void renamePhoto(image.name);
+                            if (event.key === "Escape") {
+                              setRenameDrafts((current) => ({ ...current, [image.name]: image.name }));
+                              setEditingImageName(null);
+                            }
+                          }}
+                        />
+                        <button onClick={() => renamePhoto(image.name)}>Save</button>
+                        <button
+                          onClick={() => {
+                            setRenameDrafts((current) => ({ ...current, [image.name]: image.name }));
+                            setEditingImageName(null);
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="image-view-row">
+                        <span className="image-name" title={image.name}>
+                          {image.name}
+                        </span>
+                        <button
+                          className="compact-action"
+                          onClick={() => {
+                            setRenameDrafts((current) => ({ ...current, [image.name]: image.name }));
+                            setEditingImageName(image.name);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button className="compact-action danger-action" onClick={() => deletePhoto(image.name)}>
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

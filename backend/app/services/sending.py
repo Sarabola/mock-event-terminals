@@ -105,9 +105,7 @@ async def run_send_job(job_id: int) -> None:
         )
 
     def send() -> None:
-        if job.device_name == "lunafast4a":
-            sender.make_selected_photos_request(image_names, runtime_settings, progress_callback)
-        elif job.device_name == "beward":
+        if job.device_name in {"lunafast4a", "beward", "hikvision_terminal_thermo"}:
             sender.make_selected_photos_request(image_names, runtime_settings, progress_callback)
         else:
             sender.make_selected_photos_request(image_names, progress_callback)

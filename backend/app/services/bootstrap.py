@@ -11,6 +11,7 @@ DEFAULT_DEVICES = [
     ("lunafast4a", "Luna Fast 4A", True, True),
     ("r20", "R20", False, False),
     ("beward", "Beward", True, False),
+    ("hikvision_terminal_thermo", "Hikvision Terminal Thermo", True, False),
 ]
 
 

@@ -14,6 +14,7 @@
   - Luna Fast 4A
   - R20
   - Beward
+  - Hikvision Terminal Thermo
 - Поддержка папки `images` для `.jpg`, `.jpeg`, `.png`.
 - Просмотр, загрузка, удаление и переименование изображений из веб-интерфейса.
 - Docker Compose запуск backend/frontend.
