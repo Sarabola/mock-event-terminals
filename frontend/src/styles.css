@@ -1,0 +1,436 @@
+:root {
+  color: #172024;
+  background: #eef2f3;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  min-height: 36px;
+  border: 1px solid #b8c5c9;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #172024;
+  cursor: pointer;
+  padding: 0 14px;
+}
+
+button:hover:not(:disabled) {
+  border-color: #28706f;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #b8c5c9;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #172024;
+  padding: 8px 10px;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 auto 14px;
+  max-width: 1440px;
+}
+
+.topbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.topbar p {
+  margin: 4px 0 0;
+  color: #5b686d;
+}
+
+.message {
+  max-width: 1440px;
+  margin: 0 auto 14px;
+  min-height: 42px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.message button {
+  min-width: 32px;
+  min-height: 30px;
+  padding: 0;
+}
+
+.message-ok {
+  background: #e7f5ef;
+  border: 1px solid #82bfa4;
+}
+
+.message-error {
+  background: #ffecec;
+  border: 1px solid #e48787;
+}
+
+.workspace {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(420px, 1fr) minmax(280px, 360px);
+  gap: 14px;
+  align-items: start;
+}
+
+.device-list,
+.send-panel,
+.panel {
+  background: #ffffff;
+  border: 1px solid #d6dee1;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.main-panels {
+  display: grid;
+  gap: 14px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.device-button {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.device-button small {
+  color: #66757a;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.device-button.active {
+  border-color: #28706f;
+  background: #e8f3f1;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.two-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+label span {
+  display: block;
+  margin-bottom: 6px;
+  color: #4c5a60;
+  font-size: 13px;
+}
+
+.settings-band {
+  margin-top: 14px;
+  border-top: 1px solid #d9e1e4;
+  padding-top: 14px;
+}
+
+.settings-band.compact {
+  display: grid;
+  gap: 10px;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.check-row input,
+.image-row input {
+  width: 18px;
+  min-height: 18px;
+  flex: 0 0 auto;
+}
+
+.check-row span,
+.image-row span {
+  margin: 0;
+}
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.segmented button.active {
+  background: #28706f;
+  border-color: #28706f;
+  color: #ffffff;
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.photo-summary {
+  color: #59676c;
+  margin-bottom: 8px;
+}
+
+.image-table {
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #d9e1e4;
+  border-radius: 6px;
+}
+
+.image-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  border-bottom: 1px solid #edf1f2;
+  padding: 8px 10px;
+}
+
+.image-row:last-child {
+  border-bottom: 0;
+}
+
+.empty {
+  color: #66757a;
+  margin: 0;
+  padding: 12px;
+}
+
+.primary-action,
+.secondary-action {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.primary-action {
+  background: #28706f;
+  border-color: #28706f;
+  color: #ffffff;
+}
+
+.progress-block {
+  margin-top: 12px;
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #4c5a60;
+  margin-bottom: 6px;
+}
+
+.progress-track {
+  height: 12px;
+  overflow: hidden;
+  background: #d9e1e4;
+  border-radius: 999px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #28706f;
+  transition: width 160ms ease;
+}
+
+.result-list {
+  margin-top: 12px;
+  max-height: 430px;
+  overflow: auto;
+}
+
+.result-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 34px;
+  border-bottom: 1px solid #edf1f2;
+}
+
+.result-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ok {
+  color: #1f7a4d;
+}
+
+.bad {
+  color: #bb3434;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.auth-panel {
+  width: min(100%, 380px);
+  display: grid;
+  gap: 14px;
+  background: #ffffff;
+  border: 1px solid #d6dee1;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.auth-panel h1 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.auth-tabs button.active {
+  background: #28706f;
+  border-color: #28706f;
+  color: #ffffff;
+}
+
+.auth-error {
+  color: #bb3434;
+  background: #ffecec;
+  border: 1px solid #e48787;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+@media (max-width: 1050px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .device-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .device-list .section-heading {
+    grid-column: 1 / -1;
+  }
+
+  .device-button {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .topbar,
+  .section-heading,
+  .inline-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .topbar-actions button {
+    flex: 1 1 120px;
+  }
+
+  .two-columns,
+  .device-list,
+  .segmented {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar {
+    width: 100%;
+  }
+
+  .toolbar button,
+  .section-heading button {
+    width: 100%;
+  }
+}
