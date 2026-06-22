@@ -18,10 +18,15 @@ export default function App() {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [photoScope, setPhotoScope] = useState<PhotoScope>("all");
   const [sendJob, setSendJob] = useState<SendJob | null>(null);
+  const [repeatEnabled, setRepeatEnabled] = useState(false);
+  const [repeatMinutes, setRepeatMinutes] = useState(5);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [passwordPanelOpen, setPasswordPanelOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
   const [editingImageName, setEditingImageName] = useState<string | null>(null);
   const [notice, setNotice] = useState<string>("");
@@ -55,6 +60,12 @@ export default function App() {
 
     return () => window.clearInterval(timer);
   }, [sendJob]);
+
+  useEffect(() => {
+    if (sendJob && ["completed", "failed"].includes(sendJob.status)) {
+      setRepeatEnabled(false);
+    }
+  }, [sendJob?.status]);
 
   async function restoreSession() {
     if (!getStoredToken()) return;
@@ -92,6 +103,9 @@ export default function App() {
     setSendJob(null);
     setDeviceDraft(null);
     setSelectedDeviceName("");
+    setPasswordPanelOpen(false);
+    setNewPassword("");
+    setConfirmPassword("");
   }
 
   async function loadInitialData() {
@@ -122,6 +136,31 @@ export default function App() {
       setNetwork(saved);
       setNetworkDraft(saved);
       setNotice("Network settings saved");
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
+  function cancelPasswordChange() {
+    setPasswordPanelOpen(false);
+    setNewPassword("");
+    setConfirmPassword("");
+    setError("");
+  }
+
+  async function changePassword() {
+    if (!authEmail || !newPassword) return;
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    try {
+      setError("");
+      await api.changePassword(authEmail, newPassword);
+      cancelPasswordChange();
+      setAuthMode("login");
+      setAuthPassword("");
+      setNotice("Password changed");
     } catch (err) {
       setError(formatError(err));
     }
@@ -170,7 +209,11 @@ export default function App() {
       const savedImages = await api.updateImages(payload, photoScope);
       setImages(savedImages);
       setRenameDrafts(Object.fromEntries(savedImages.map((image) => [image.name, image.name])));
-      const job = await api.startSending(selectedDevice.name);
+      const job = await api.startSending(
+        selectedDevice.name,
+        repeatEnabled,
+        repeatEnabled ? repeatMinutes : null
+      );
       setSendJob(job);
       setNotice("Sending started");
     } catch (err) {
@@ -192,6 +235,10 @@ export default function App() {
 
   function patchDeviceDraft(patch: Partial<DeviceSettings>) {
     setDeviceDraft((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  function setDelaySeconds(value: number) {
+    patchDeviceDraft({ delay_seconds: Math.min(3600, Math.max(0, Number.isFinite(value) ? value : 0)) });
   }
 
   function setTemperatureMode(mode: "normal" | "above" | "abnormal") {
@@ -273,39 +320,99 @@ export default function App() {
       <main className="auth-shell">
         <section className="auth-panel">
           <h1>Terminal Emulator</h1>
-          <div className="auth-tabs">
-            <button className={authMode === "login" ? "active" : ""} onClick={() => setAuthMode("login")}>
-              Login
-            </button>
-            <button className={authMode === "register" ? "active" : ""} onClick={() => setAuthMode("register")}>
-              Register
-            </button>
-          </div>
-          <label>
-            <span>Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              value={authEmail}
-              onChange={(event) => setAuthEmail(event.target.value)}
-            />
-          </label>
-          <label>
-            <span>Password</span>
-            <input
-              type="password"
-              autoComplete={authMode === "login" ? "current-password" : "new-password"}
-              value={authPassword}
-              onChange={(event) => setAuthPassword(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") void submitAuth();
-              }}
-            />
-          </label>
-          <button className="primary-action" onClick={submitAuth}>
-            {authMode === "login" ? "Login" : "Create Account"}
-          </button>
+          {passwordPanelOpen ? (
+            <>
+              <label>
+                <span>Email</span>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={authEmail}
+                  onChange={(event) => setAuthEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>New password</span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>Confirm password</span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void changePassword();
+                    if (event.key === "Escape") cancelPasswordChange();
+                  }}
+                />
+              </label>
+              <div className="auth-actions">
+                <button
+                  className="primary-action"
+                  onClick={changePassword}
+                  disabled={!authEmail || !newPassword || !confirmPassword}
+                >
+                  Save
+                </button>
+                <button onClick={cancelPasswordChange}>Cancel</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="auth-tabs">
+                <button className={authMode === "login" ? "active" : ""} onClick={() => setAuthMode("login")}>
+                  Login
+                </button>
+                <button className={authMode === "register" ? "active" : ""} onClick={() => setAuthMode("register")}>
+                  Register
+                </button>
+              </div>
+              <label>
+                <span>Email</span>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={authEmail}
+                  onChange={(event) => setAuthEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                <span>Password</span>
+                <input
+                  type="password"
+                  autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                  value={authPassword}
+                  onChange={(event) => setAuthPassword(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void submitAuth();
+                  }}
+                />
+              </label>
+              <button className="primary-action" onClick={submitAuth}>
+                {authMode === "login" ? "Login" : "Create Account"}
+              </button>
+              <button
+                onClick={() => {
+                  setError("");
+                  setNotice("");
+                  setPasswordPanelOpen(true);
+                  setNewPassword("");
+                  setConfirmPassword("");
+                }}
+              >
+                Change Password
+              </button>
+            </>
+          )}
           {error && <div className="auth-error">{error}</div>}
+          {notice && <div className="auth-notice">{notice}</div>}
         </section>
       </main>
     );
@@ -595,20 +702,62 @@ export default function App() {
           <button className="primary-action" onClick={startSending} disabled={!selectedDevice}>
             Send Photos
           </button>
-          <button className="secondary-action" onClick={startSending} disabled={!selectedDevice}>
-            Repeat
-          </button>
+          <div className="repeat-control">
+            <label>
+              <span>Delay between sending, seconds</span>
+              <input
+                type="number"
+                min={0}
+                max={3600}
+                step={0.1}
+                value={deviceDraft?.delay_seconds ?? 3.1}
+                disabled={!deviceDraft}
+                onChange={(event) => {
+                  setDelaySeconds(Number(event.target.value));
+                }}
+              />
+            </label>
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={repeatEnabled}
+                onChange={(event) => setRepeatEnabled(event.target.checked)}
+              />
+              <span>Repeat sending</span>
+            </label>
+            {repeatEnabled && (
+              <label>
+                <span>Minutes</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={1440}
+                  step={1}
+                  value={repeatMinutes}
+                  onChange={(event) => setRepeatMinutes(Math.max(1, Number(event.target.value) || 1))}
+                />
+              </label>
+            )}
+          </div>
 
           <div className="progress-block">
             <div className="progress-meta">
               <span>{sendJob?.status ?? "idle"}</span>
-              <span>{Math.round(sendJob?.progress ?? 0)}%</span>
+              <span>
+                {sendJob?.repeat_enabled && sendJob.repeat_remaining_seconds != null
+                  ? `${Math.ceil(sendJob.repeat_remaining_seconds / 60)} min left`
+                  : `${Math.round(sendJob?.progress ?? 0)}%`}
+              </span>
             </div>
             <div className="progress-track">
               <div className="progress-fill" style={{ width: `${sendJob?.progress ?? 0}%` }} />
             </div>
             <p>
-              {sendJob ? `${sendJob.sent}/${sendJob.total} photos processed` : `${selectedCount} photos ready`}
+              {sendJob
+                ? sendJob.repeat_enabled
+                  ? `${sendJob.sent} photos processed`
+                  : `${sendJob.sent}/${sendJob.total} photos processed`
+                : `${selectedCount} photos ready`}
             </p>
           </div>
 

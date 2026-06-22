@@ -509,6 +509,20 @@ label span {
   background: var(--bg-raised);
 }
 
+.repeat-control {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-raised);
+  padding: 10px;
+}
+
+.repeat-control label:last-child {
+  margin: 0;
+}
+
 .progress-block {
   margin-top: 12px;
   border: 1px solid var(--border);
@@ -616,6 +630,24 @@ label span {
   background: var(--accent);
   color: #1b1208;
   font-weight: 600;
+}
+
+.auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.auth-actions .primary-action {
+  margin-bottom: 0;
+}
+
+.auth-notice {
+  color: var(--success);
+  background: var(--success-soft);
+  border: 1px solid #2d7555;
+  border-radius: 8px;
+  padding: 10px;
 }
 
 .auth-error {

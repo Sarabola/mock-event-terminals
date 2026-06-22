@@ -21,8 +21,10 @@ from backend.app.schemas.schemas import (
     ImageSelectionUpdate,
     NetworkSettingsRead,
     NetworkSettingsUpdate,
+    PasswordChangeRequest,
     SendJobDetail,
     SendJobRead,
+    SendStartRequest,
     UserRead,
 )
 from backend.app.services.auth import create_access_token, hash_password, parse_access_token, verify_password
@@ -81,6 +83,21 @@ async def login(payload: AuthRequest, session: AsyncSession = Depends(get_sessio
 @router.get("/auth/me", response_model=UserRead)
 async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.put("/auth/password", response_model=UserRead)
+async def change_password(
+    payload: PasswordChangeRequest,
+    session: AsyncSession = Depends(get_session),
+) -> User:
+    email = payload.email.strip().lower()
+    user = await session.scalar(select(User).where(User.email == email))
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.password_hash = hash_password(payload.password)
+    await session.commit()
+    await session.refresh(user)
+    return user
 
 
 @router.get("/settings/network", response_model=NetworkSettingsRead)
@@ -246,10 +263,17 @@ async def update_bulk_image_selection(
 async def start_sending(
     device_name: str,
     background_tasks: BackgroundTasks,
+    payload: SendStartRequest | None = None,
     current_user: User = Depends(get_current_user),
 ) -> dict:
+    send_options = payload or SendStartRequest()
     try:
-        job_id = await create_send_job(device_name, current_user.id)
+        job_id = await create_send_job(
+            device_name=device_name,
+            user_id=current_user.id,
+            repeat_enabled=send_options.repeat_enabled,
+            repeat_minutes=send_options.repeat_minutes,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     background_tasks.add_task(run_send_job, job_id)

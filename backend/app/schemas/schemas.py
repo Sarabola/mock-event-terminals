@@ -33,8 +33,14 @@ class AuthResponse(BaseModel):
     user: UserRead
 
 
+class PasswordChangeRequest(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+    password: str = Field(min_length=1, max_length=255)
+
+
 class DeviceSettingsRead(BaseModel):
     device_id: str
+    delay_seconds: float
     temperature_enabled: bool
     above_normal_temp: bool
     abnormal_temp: bool
@@ -48,6 +54,7 @@ class DeviceSettingsRead(BaseModel):
 
 class DeviceSettingsUpdate(BaseModel):
     device_id: str = ""
+    delay_seconds: float = Field(default=3.1, ge=0, le=3600)
     temperature_enabled: bool = False
     above_normal_temp: bool = False
     abnormal_temp: bool = False
@@ -96,6 +103,13 @@ class SendJobRead(BaseModel):
     total: int
     sent: int
     progress: float
+    repeat_enabled: bool = False
+    repeat_remaining_seconds: float | None = None
+
+
+class SendStartRequest(BaseModel):
+    repeat_enabled: bool = False
+    repeat_minutes: float | None = Field(default=None, gt=0, le=24 * 60)
 
 
 class SendResultRead(BaseModel):

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -42,6 +42,7 @@ class DeviceSettings(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     device_name: Mapped[str] = mapped_column(ForeignKey("devices.name"))
     device_id: Mapped[str] = mapped_column(String(255), default="")
+    delay_seconds: Mapped[float] = mapped_column(Float, default=3.1)
     temperature_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     above_normal_temp: Mapped[bool] = mapped_column(Boolean, default=False)
     abnormal_temp: Mapped[bool] = mapped_column(Boolean, default=False)

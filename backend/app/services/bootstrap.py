@@ -67,5 +67,7 @@ async def ensure_sqlite_columns(conn) -> None:
     settings_columns = {
         row[1] for row in (await conn.exec_driver_sql("PRAGMA table_info(device_settings)")).all()
     }
+    if "delay_seconds" not in settings_columns:
+        await conn.exec_driver_sql("ALTER TABLE device_settings ADD COLUMN delay_seconds FLOAT NOT NULL DEFAULT 3.1")
     if "liveness_enabled" not in settings_columns:
         await conn.exec_driver_sql("ALTER TABLE device_settings ADD COLUMN liveness_enabled BOOLEAN NOT NULL DEFAULT 1")

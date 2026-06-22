@@ -16,6 +16,7 @@ export type AuthResponse = {
 
 export type DeviceSettings = {
   device_id: string;
+  delay_seconds: number;
   temperature_enabled: boolean;
   above_normal_temp: boolean;
   abnormal_temp: boolean;
@@ -56,5 +57,7 @@ export type SendJob = {
   total: number;
   sent: number;
   progress: number;
+  repeat_enabled: boolean;
+  repeat_remaining_seconds?: number | null;
   results?: SendResult[];
 };

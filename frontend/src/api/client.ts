@@ -49,6 +49,8 @@ export const api = {
   login: (email: string, password: string) =>
     request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   me: () => request<User>("/auth/me"),
+  changePassword: (email: string, password: string) =>
+    request<User>("/auth/password", { method: "PUT", body: JSON.stringify({ email, password }) }),
   getNetwork: () => request<NetworkSettings>("/settings/network"),
   updateNetwork: (data: NetworkSettings) =>
     request<NetworkSettings>("/settings/network", { method: "PUT", body: JSON.stringify(data) }),
@@ -74,7 +76,11 @@ export const api = {
     }),
   imageUrl: (imageName: string) =>
     `${API_BASE}/images/${encodeURIComponent(imageName)}/content?token=${encodeURIComponent(getStoredToken() ?? "")}`,
-  startSending: (deviceName: string) => request<SendJob>(`/devices/${deviceName}/send`, { method: "POST" }),
+  startSending: (deviceName: string, repeatEnabled = false, repeatMinutes: number | null = null) =>
+    request<SendJob>(`/devices/${deviceName}/send`, {
+      method: "POST",
+      body: JSON.stringify({ repeat_enabled: repeatEnabled, repeat_minutes: repeatMinutes })
+    }),
   getSendJob: (jobId: number) => request<SendJob>(`/send-jobs/${jobId}`),
   sendCardEvent: (deviceName: string, cardNumber: string) =>
     request<{ status_code: number }>(`/devices/${deviceName}/card-event`, {

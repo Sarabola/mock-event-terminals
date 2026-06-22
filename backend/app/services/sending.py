@@ -1,4 +1,5 @@
 import asyncio
+import time
 from datetime import datetime
 
 from sqlalchemy import select
@@ -17,6 +18,7 @@ JOB_PROGRESS: dict[int, dict] = {}
 def _settings_to_runtime(settings: DeviceSettings) -> DeviceRuntimeSettings:
     return DeviceRuntimeSettings(
         device_id=settings.device_id,
+        delay_seconds=settings.delay_seconds,
         temperature_enabled=settings.temperature_enabled,
         above_normal_temp=settings.above_normal_temp,
         abnormal_temp=settings.abnormal_temp,
@@ -27,7 +29,12 @@ def _settings_to_runtime(settings: DeviceSettings) -> DeviceRuntimeSettings:
     )
 
 
-async def create_send_job(device_name: str, user_id: int) -> int:
+async def create_send_job(
+    device_name: str,
+    user_id: int,
+    repeat_enabled: bool = False,
+    repeat_minutes: float | None = None,
+) -> int:
     async with AsyncSessionLocal() as session:
         image_names = await get_selected_image_names(session, user_id)
         device = await session.get(Device, device_name)
@@ -37,6 +44,7 @@ async def create_send_job(device_name: str, user_id: int) -> int:
         session.add(job)
         await session.commit()
         await session.refresh(job)
+        repeat_duration_seconds = (repeat_minutes or 0) * 60
         JOB_PROGRESS[job.id] = {
             "id": job.id,
             "device_name": device_name,
@@ -45,6 +53,9 @@ async def create_send_job(device_name: str, user_id: int) -> int:
             "sent": 0,
             "results": [],
             "progress": 0.0,
+            "repeat_enabled": repeat_enabled and repeat_duration_seconds > 0,
+            "repeat_duration_seconds": repeat_duration_seconds,
+            "repeat_deadline": time.monotonic() + repeat_duration_seconds if repeat_enabled and repeat_duration_seconds > 0 else None,
         }
         return job.id
 
@@ -81,7 +92,19 @@ async def run_send_job(job_id: int) -> None:
         return
 
     progress = JOB_PROGRESS.setdefault(job_id, {})
-    progress.update({"status": "running", "total": len(image_names), "sent": 0, "progress": 0.0, "results": []})
+    repeat_enabled = bool(progress.get("repeat_enabled"))
+    repeat_deadline = progress.get("repeat_deadline")
+    repeat_duration_seconds = float(progress.get("repeat_duration_seconds") or 0)
+    progress.update(
+        {
+            "status": "running",
+            "total": len(image_names),
+            "sent": 0,
+            "progress": 0.0,
+            "results": [],
+            "started_at": time.monotonic(),
+        }
+    )
 
     context = DeviceContext(
         host=network.host,
@@ -90,26 +113,45 @@ async def run_send_job(job_id: int) -> None:
         images_path=settings.images_path,
     )
     sender = build_sender(job.device_name, context)
+    sender.delay_seconds = device_settings.delay_seconds
     runtime_settings = _settings_to_runtime(device_settings)
 
     def progress_callback(image_name: str, status_code: int, percent: float, error: str | None = None) -> None:
         current = JOB_PROGRESS.setdefault(job_id, {})
         results = current.setdefault("results", [])
         results.append({"image_name": image_name, "status_code": status_code, "error": error})
+        if repeat_enabled and repeat_duration_seconds > 0:
+            elapsed = time.monotonic() - current.get("started_at", time.monotonic())
+            job_progress = min((elapsed / repeat_duration_seconds) * 100, 100)
+        else:
+            job_progress = ((len(results) / len(image_names)) * 100) if image_names else percent
         current.update(
             {
                 "status": "running",
                 "sent": len(results),
                 "total": len(image_names),
-                "progress": percent,
+                "progress": job_progress,
+                "repeat_enabled": repeat_enabled,
             }
         )
 
     def send() -> None:
-        if job.device_name in {"lunafast4a", "beward", "hikvision_terminal_thermo"}:
-            sender.make_selected_photos_request(image_names, runtime_settings, progress_callback)
-        else:
-            sender.make_selected_photos_request(image_names, progress_callback)
+        while True:
+            for image_name in image_names:
+                if repeat_enabled and repeat_deadline is not None and time.monotonic() >= repeat_deadline:
+                    progress["repeat_enabled"] = False
+                    return
+
+                if job.device_name in {"lunafast4a", "beward", "hikvision_terminal_thermo"}:
+                    sender.make_selected_photos_request([image_name], runtime_settings, progress_callback)
+                else:
+                    sender.make_selected_photos_request([image_name], progress_callback)
+
+            if not repeat_enabled:
+                return
+            if repeat_deadline is not None and time.monotonic() >= repeat_deadline:
+                progress["repeat_enabled"] = False
+                return
 
     try:
         await asyncio.to_thread(send)
@@ -157,6 +199,7 @@ async def _persist_job_results(job_id: int, status: str) -> None:
 
     progress["status"] = status
     progress["progress"] = 100.0
+    progress["repeat_enabled"] = False
 
 
 async def get_job_payload(job_id: int, user_id: int) -> dict | None:
@@ -174,6 +217,10 @@ async def get_job_payload(job_id: int, user_id: int) -> dict | None:
     total = live.get("total", job.total)
     sent = live.get("sent", job.sent)
     progress = live.get("progress", 100.0 if job.status == "completed" else ((sent / total) * 100 if total else 0.0))
+    repeat_deadline = live.get("repeat_deadline")
+    repeat_remaining_seconds = None
+    if repeat_deadline is not None and live.get("repeat_enabled"):
+        repeat_remaining_seconds = max(repeat_deadline - time.monotonic(), 0)
     return {
         "id": job.id,
         "device_name": job.device_name,
@@ -181,6 +228,8 @@ async def get_job_payload(job_id: int, user_id: int) -> dict | None:
         "total": total,
         "sent": sent,
         "progress": progress,
+        "repeat_enabled": bool(live.get("repeat_enabled", False)),
+        "repeat_remaining_seconds": repeat_remaining_seconds,
         "results": results,
         "created_at": job.created_at,
         "finished_at": job.finished_at,
