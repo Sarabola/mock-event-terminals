@@ -164,6 +164,7 @@ async def update_device_settings(
         raise HTTPException(status_code=404, detail="Device not found")
     settings = await get_or_create_device_settings(session, current_user.id, device_name)
     settings.device_id = payload.device_id
+    settings.delay_seconds = payload.delay_seconds
     settings.temperature_enabled = payload.temperature_enabled and device.supports_temperature
     settings.above_normal_temp = payload.above_normal_temp and settings.temperature_enabled
     settings.abnormal_temp = payload.abnormal_temp and settings.temperature_enabled
