@@ -1,5 +1,7 @@
 import type {
   AuthResponse,
+  BatchSendResponse,
+  BatchTarget,
   Device,
   DeviceSettings,
   ImageFile,
@@ -81,7 +83,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ repeat_enabled: repeatEnabled, repeat_minutes: repeatMinutes })
     }),
+  startBatchSending: (targets: BatchTarget[], repeatEnabled = false, repeatMinutes: number | null = null) =>
+    request<BatchSendResponse>("/devices/send", {
+      method: "POST",
+      body: JSON.stringify({
+        targets: targets.map(({ id: _id, ...target }) => target),
+        repeat_enabled: repeatEnabled,
+        repeat_minutes: repeatMinutes
+      })
+    }),
   getSendJob: (jobId: number) => request<SendJob>(`/send-jobs/${jobId}`),
+  stopSending: (jobId: number) => request<SendJob>(`/send-jobs/${jobId}/stop`, { method: "POST" }),
   sendCardEvent: (deviceName: string, cardNumber: string) =>
     request<{ status_code: number }>(`/devices/${deviceName}/card-event`, {
       method: "POST",

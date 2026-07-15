@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { api, getStoredToken, setStoredToken } from "./api/client";
-import type { Device, DeviceSettings, ImageFile, NetworkSettings, PhotoScope, SendJob, User } from "./types/domain";
+import type { BatchTarget, Device, DeviceSettings, ImageFile, NetworkSettings, PhotoScope, SendJob, User } from "./types/domain";
 
 const emptyNetwork: NetworkSettings = { host: "localhost", port: 9091 };
 
@@ -18,6 +18,9 @@ export default function App() {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [photoScope, setPhotoScope] = useState<PhotoScope>("all");
   const [sendJob, setSendJob] = useState<SendJob | null>(null);
+  const [activeTab, setActiveTab] = useState<"single" | "batch">("single");
+  const [batchTargets, setBatchTargets] = useState<BatchTarget[]>([]);
+  const [batchJobs, setBatchJobs] = useState<SendJob[]>([]);
   const [repeatEnabled, setRepeatEnabled] = useState(false);
   const [repeatMinutes, setRepeatMinutes] = useState(5);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -47,7 +50,7 @@ export default function App() {
   }, [selectedDevice]);
 
   useEffect(() => {
-    if (!sendJob || ["completed", "failed"].includes(sendJob.status)) return;
+    if (!sendJob || ["completed", "failed", "cancelled"].includes(sendJob.status)) return;
 
     const timer = window.setInterval(async () => {
       try {
@@ -62,7 +65,20 @@ export default function App() {
   }, [sendJob]);
 
   useEffect(() => {
-    if (sendJob && ["completed", "failed"].includes(sendJob.status)) {
+    if (!batchJobs.some((job) => !["completed", "failed", "cancelled"].includes(job.status))) return;
+    const timer = window.setInterval(async () => {
+      try {
+        const freshJobs = await Promise.all(batchJobs.map((job) => api.getSendJob(job.id)));
+        setBatchJobs(freshJobs);
+      } catch (err) {
+        setError(formatError(err));
+      }
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [batchJobs]);
+
+  useEffect(() => {
+    if (sendJob && ["completed", "failed", "cancelled"].includes(sendJob.status)) {
       setRepeatEnabled(false);
     }
   }, [sendJob?.status]);
@@ -101,6 +117,8 @@ export default function App() {
     setDevices([]);
     setImages([]);
     setSendJob(null);
+    setBatchJobs([]);
+    setBatchTargets([]);
     setDeviceDraft(null);
     setSelectedDeviceName("");
     setPasswordPanelOpen(false);
@@ -122,6 +140,7 @@ export default function App() {
       setImages(imagesData);
       setRenameDrafts(Object.fromEntries(imagesData.map((image) => [image.name, image.name])));
       setSelectedDeviceName(devicesData[0]?.name ?? "");
+      setBatchTargets((current) => current.filter((target) => devicesData.some((device) => device.name === target.device_name)));
     } catch (err) {
       setError(formatError(err));
       if (formatError(err).includes("401")) {
@@ -216,6 +235,80 @@ export default function App() {
       );
       setSendJob(job);
       setNotice("Sending started");
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
+  async function stopSending() {
+    if (!sendJob) return;
+    try {
+      const job = await api.stopSending(sendJob.id);
+      setSendJob(job);
+      setNotice("Stop requested — the current photo request will finish first");
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
+  function addBatchTarget() {
+    const device = devices[0];
+    if (!device) return;
+    setBatchTargets((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        name: `Terminal ${current.length + 1}`,
+        device_name: device.name,
+        settings: cloneSettings(device.settings)
+      }
+    ]);
+  }
+
+  function patchBatchTarget(id: string, patch: Partial<BatchTarget>) {
+    setBatchTargets((current) => current.map((target) => (target.id === id ? { ...target, ...patch } : target)));
+  }
+
+  function patchBatchTargetSettings(id: string, patch: Partial<DeviceSettings>) {
+    setBatchTargets((current) =>
+      current.map((target) => (target.id === id ? { ...target, settings: { ...target.settings, ...patch } } : target))
+    );
+  }
+
+  function setBatchTargetModel(id: string, deviceName: string) {
+    const device = devices.find((item) => item.name === deviceName);
+    if (!device) return;
+    setBatchTargets((current) =>
+      current.map((target) =>
+        target.id === id ? { ...target, device_name: deviceName, settings: cloneSettings(device.settings) } : target
+      )
+    );
+  }
+
+  async function startBatchSending() {
+    if (batchTargets.length === 0) return;
+    try {
+      setError("");
+      const payload = Object.fromEntries(images.map((image) => [image.name, image.selected]));
+      const savedImages = await api.updateImages(payload, photoScope);
+      setImages(savedImages);
+      const response = await api.startBatchSending(batchTargets, repeatEnabled, repeatEnabled ? repeatMinutes : null);
+      setBatchJobs(response.jobs);
+      setNotice(`${response.jobs.length} terminal jobs started in parallel`);
+    } catch (err) {
+      setError(formatError(err));
+    }
+  }
+
+  async function stopBatchSending() {
+    const activeJobs = batchJobs.filter((job) => !["completed", "failed", "cancelled"].includes(job.status));
+    if (activeJobs.length === 0) return;
+    try {
+      const stoppedJobs = await Promise.all(activeJobs.map((job) => api.stopSending(job.id)));
+      setBatchJobs((current) =>
+        current.map((job) => stoppedJobs.find((stopped) => stopped.id === job.id) ?? job)
+      );
+      setNotice("Stop requested for all terminal jobs");
     } catch (err) {
       setError(formatError(err));
     }
@@ -448,6 +541,16 @@ export default function App() {
         </section>
       )}
 
+      <nav className="view-tabs" aria-label="Sending mode">
+        <button className={activeTab === "single" ? "active" : ""} onClick={() => setActiveTab("single")}>
+          Single terminal
+        </button>
+        <button className={activeTab === "batch" ? "active" : ""} onClick={() => setActiveTab("batch")}>
+          Multi-send
+        </button>
+      </nav>
+
+      {activeTab === "single" ? (
       <section className="workspace">
         <aside className="device-list">
           <div className="section-heading">
@@ -702,6 +805,9 @@ export default function App() {
           <button className="primary-action" onClick={startSending} disabled={!selectedDevice}>
             Send Photos
           </button>
+          {sendJob && !["completed", "failed", "cancelled"].includes(sendJob.status) && (
+            <button className="secondary-action" onClick={stopSending}>Stop sending</button>
+          )}
           <div className="repeat-control">
             <label>
               <span>Delay between sending, seconds</span>
@@ -717,6 +823,9 @@ export default function App() {
                 }}
               />
             </label>
+            <button className="secondary-action" onClick={saveDeviceSettings} disabled={!selectedDevice || !deviceDraft}>
+              Save delay and settings
+            </button>
             <label className="check-row">
               <input
                 type="checkbox"
@@ -771,6 +880,67 @@ export default function App() {
           </div>
         </aside>
       </section>
+      ) : (
+        <section className="batch-workspace">
+          <section className="panel batch-target-panel">
+            <div className="section-heading">
+              <div>
+                <h2>Terminal instances</h2>
+                <p className="section-description">Each instance receives the selected photos independently and in parallel.</p>
+              </div>
+              <button onClick={addBatchTarget} disabled={devices.length === 0}>Add terminal</button>
+            </div>
+            {batchTargets.length === 0 && <p className="empty">Add one or more terminal instances to prepare a multi-send.</p>}
+            <div className="batch-target-list">
+              {batchTargets.map((target, index) => {
+                const targetDevice = devices.find((device) => device.name === target.device_name);
+                return (
+                  <article className="batch-target" key={target.id}>
+                    <div className="batch-target-heading">
+                      <strong>#{index + 1}</strong>
+                      <button className="compact-action danger-action" onClick={() => setBatchTargets((current) => current.filter((item) => item.id !== target.id))}>Remove</button>
+                    </div>
+                    <div className="form-grid two-columns">
+                      <label><span>Terminal name</span><input value={target.name} onChange={(event) => patchBatchTarget(target.id, { name: event.target.value })} /></label>
+                      <label><span>Model</span><select value={target.device_name} onChange={(event) => setBatchTargetModel(target.id, event.target.value)}>{devices.map((device) => <option key={device.name} value={device.name}>{device.title}</option>)}</select></label>
+                      <label><span>Device ID</span><input value={target.settings.device_id} onChange={(event) => patchBatchTargetSettings(target.id, { device_id: event.target.value })} /></label>
+                      <label><span>Delay, seconds</span><input type="number" min={0} max={3600} step={0.1} value={target.settings.delay_seconds} onChange={(event) => patchBatchTargetSettings(target.id, { delay_seconds: Math.max(0, Number(event.target.value) || 0) })} /></label>
+                    </div>
+                    {targetDevice?.supports_temperature && <div className="batch-options">
+                      <label className="check-row"><input type="checkbox" checked={target.settings.temperature_enabled} onChange={(event) => patchBatchTargetSettings(target.id, { temperature_enabled: event.target.checked })} /><span>Temperature detection</span></label>
+                      <label className="check-row"><input type="checkbox" checked={target.settings.above_normal_temp} disabled={!target.settings.temperature_enabled} onChange={(event) => patchBatchTargetSettings(target.id, { above_normal_temp: event.target.checked, abnormal_temp: event.target.checked ? false : target.settings.abnormal_temp })} /><span>Above normal temperature</span></label>
+                      <label className="check-row"><input type="checkbox" checked={target.settings.abnormal_temp} disabled={!target.settings.temperature_enabled} onChange={(event) => patchBatchTargetSettings(target.id, { abnormal_temp: event.target.checked, above_normal_temp: event.target.checked ? false : target.settings.above_normal_temp })} /><span>Abnormal temperature</span></label>
+                      <label className="check-row"><input type="checkbox" checked={target.settings.old_event} onChange={(event) => patchBatchTargetSettings(target.id, { old_event: event.target.checked })} /><span>Old event date</span></label>
+                      {targetDevice.supports_liveness && <label className="check-row"><input type="checkbox" checked={target.settings.liveness_enabled} onChange={(event) => patchBatchTargetSettings(target.id, { liveness_enabled: event.target.checked })} /><span>Liveness event</span></label>}
+                    </div>}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="panel batch-send-panel">
+            <div className="section-heading"><h2>Batch send</h2></div>
+            <p className="photo-summary">{selectedCount} selected photos × {batchTargets.length} terminals</p>
+            <div className="batch-photo-list">
+              {images.map((image) => <label className="check-row" key={image.name}><input type="checkbox" checked={image.selected} onChange={(event) => toggleImage(image.name, event.target.checked)} /><span>{image.name}</span></label>)}
+            </div>
+            <div className="repeat-control">
+              <label className="check-row"><input type="checkbox" checked={repeatEnabled} onChange={(event) => setRepeatEnabled(event.target.checked)} /><span>Repeat sending</span></label>
+              {repeatEnabled && <label><span>Minutes</span><input type="number" min={1} max={1440} value={repeatMinutes} onChange={(event) => setRepeatMinutes(Math.max(1, Number(event.target.value) || 1))} /></label>}
+            </div>
+            <button className="primary-action" onClick={startBatchSending} disabled={batchTargets.length === 0 || selectedCount === 0}>Send to all terminals</button>
+            {batchJobs.some((job) => !["completed", "failed", "cancelled"].includes(job.status)) && <button className="secondary-action" onClick={stopBatchSending}>Stop all sending</button>}
+            <div className="batch-progress-list">
+              {batchJobs.map((job) => <div className="batch-job" key={job.id}>
+                <div className="progress-meta"><span>{job.target_name ?? job.device_name}{job.device_id ? ` · ${job.device_id}` : ""}</span><span>{job.status} · {Math.round(job.progress)}%</span></div>
+                <div className="progress-track"><div className="progress-fill" style={{ width: `${job.progress}%` }} /></div>
+                <small>{job.repeat_enabled ? `${job.sent} photos processed` : `${job.sent}/${job.total} photos processed`}</small>
+              </div>)}
+            </div>
+          </section>
+        </section>
+      )}
     </main>
   );
 }

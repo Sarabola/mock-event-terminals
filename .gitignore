@@ -218,3 +218,4 @@ __marimo__/
 /images/*
 /app/settings.json
 /data/app.db
+/frontend/node_modules/

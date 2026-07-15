@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
@@ -5,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.api.deps import get_current_user
 from backend.app.core.config import get_settings
-from backend.app.db.session import get_session
+from backend.app.db.session import AsyncSessionLocal, get_session
 from backend.app.models.models import Device, DeviceSettings, NetworkSettings, User
 from backend.app.schemas.schemas import (
     AuthRequest,
     AuthResponse,
+    BatchSendRequest,
+    BatchSendStartResponse,
     BulkImageSelectionUpdate,
     CardEventRequest,
     CardEventResponse,
@@ -38,7 +42,8 @@ from backend.app.services.images import (
     update_image_selections,
     upload_image,
 )
-from backend.app.services.sending import create_send_job, get_job_payload, run_send_job, send_card_event
+from backend.app.services.sending import create_send_job, get_job_payload, run_send_job, send_card_event, stop_send_job
+from backend.app.senders.types import DeviceRuntimeSettings
 
 router = APIRouter(prefix="/api")
 
@@ -283,9 +288,60 @@ async def start_sending(
     return payload
 
 
+@router.post("/devices/send", response_model=BatchSendStartResponse)
+async def start_batch_sending(
+    payload: BatchSendRequest,
+    current_user: User = Depends(get_current_user),
+) -> BatchSendStartResponse:
+    """Start a separate job for every terminal instance at the same time."""
+    job_ids: list[int] = []
+    async with AsyncSessionLocal() as session:
+        for target in payload.targets:
+            device = await session.get(Device, target.device_name)
+            if device is None:
+                raise HTTPException(status_code=404, detail=f"Unsupported device: {target.device_name}")
+
+            source = target.settings
+            runtime_settings = DeviceRuntimeSettings(
+                device_id=source.device_id,
+                delay_seconds=source.delay_seconds,
+                temperature_enabled=source.temperature_enabled and device.supports_temperature,
+                above_normal_temp=source.above_normal_temp and source.temperature_enabled and device.supports_temperature,
+                abnormal_temp=source.abnormal_temp and source.temperature_enabled and device.supports_temperature,
+                old_event=source.old_event,
+                liveness_enabled=source.liveness_enabled if device.supports_liveness else True,
+                card_event=source.card_event and device.supports_card,
+                card_number=source.card_number,
+            )
+            job_ids.append(
+                await create_send_job(
+                    device_name=target.device_name,
+                    user_id=current_user.id,
+                    repeat_enabled=payload.repeat_enabled,
+                    repeat_minutes=payload.repeat_minutes,
+                    settings_override=runtime_settings,
+                    target_name=target.name,
+                )
+            )
+
+    # Starlette's BackgroundTasks await tasks one by one. These tasks run independently.
+    for job_id in job_ids:
+        asyncio.create_task(run_send_job(job_id))
+    jobs = [await get_job_payload(job_id, current_user.id) for job_id in job_ids]
+    return BatchSendStartResponse(jobs=[job for job in jobs if job is not None])
+
+
 @router.get("/send-jobs/{job_id}", response_model=SendJobDetail)
 async def get_send_job(job_id: int, current_user: User = Depends(get_current_user)) -> dict:
     payload = await get_job_payload(job_id, current_user.id)
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Send job not found")
+    return payload
+
+
+@router.post("/send-jobs/{job_id}/stop", response_model=SendJobDetail)
+async def stop_sending(job_id: int, current_user: User = Depends(get_current_user)) -> dict:
+    payload = await stop_send_job(job_id, current_user.id)
     if payload is None:
         raise HTTPException(status_code=404, detail="Send job not found")
     return payload

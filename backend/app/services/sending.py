@@ -34,6 +34,8 @@ async def create_send_job(
     user_id: int,
     repeat_enabled: bool = False,
     repeat_minutes: float | None = None,
+    settings_override: DeviceRuntimeSettings | None = None,
+    target_name: str | None = None,
 ) -> int:
     async with AsyncSessionLocal() as session:
         image_names = await get_selected_image_names(session, user_id)
@@ -56,6 +58,9 @@ async def create_send_job(
             "repeat_enabled": repeat_enabled and repeat_duration_seconds > 0,
             "repeat_duration_seconds": repeat_duration_seconds,
             "repeat_deadline": time.monotonic() + repeat_duration_seconds if repeat_enabled and repeat_duration_seconds > 0 else None,
+            "settings_override": settings_override.model_dump() if settings_override else None,
+            "target_name": target_name,
+            "device_id": settings_override.device_id if settings_override else None,
         }
         return job.id
 
@@ -106,15 +111,16 @@ async def run_send_job(job_id: int) -> None:
         }
     )
 
+    override = progress.get("settings_override")
+    runtime_settings = DeviceRuntimeSettings(**override) if override else _settings_to_runtime(device_settings)
     context = DeviceContext(
         host=network.host,
         port=network.port,
-        device_id=device_settings.device_id,
+        device_id=runtime_settings.device_id,
         images_path=settings.images_path,
     )
     sender = build_sender(job.device_name, context)
-    sender.delay_seconds = device_settings.delay_seconds
-    runtime_settings = _settings_to_runtime(device_settings)
+    sender.delay_seconds = runtime_settings.delay_seconds
 
     def progress_callback(image_name: str, status_code: int, percent: float, error: str | None = None) -> None:
         current = JOB_PROGRESS.setdefault(job_id, {})
@@ -138,6 +144,9 @@ async def run_send_job(job_id: int) -> None:
     def send() -> None:
         while True:
             for image_name in image_names:
+                if progress.get("cancel_requested"):
+                    progress["repeat_enabled"] = False
+                    return
                 if repeat_enabled and repeat_deadline is not None and time.monotonic() >= repeat_deadline:
                     progress["repeat_enabled"] = False
                     return
@@ -155,7 +164,7 @@ async def run_send_job(job_id: int) -> None:
 
     try:
         await asyncio.to_thread(send)
-        await _persist_job_results(job_id, "completed")
+        await _persist_job_results(job_id, "cancelled" if progress.get("cancel_requested") else "completed")
     except Exception as exc:
         progress["status"] = "failed"
         progress["error"] = str(exc)
@@ -172,7 +181,9 @@ async def _finish_empty_job(job_id: int) -> None:
         job.total = 0
         job.finished_at = datetime.utcnow()
         await session.commit()
-    JOB_PROGRESS[job_id] = {"status": "completed", "sent": 0, "total": 0, "progress": 100.0, "results": []}
+    JOB_PROGRESS.setdefault(job_id, {}).update(
+        {"status": "completed", "sent": 0, "total": 0, "progress": 100.0, "results": []}
+    )
 
 
 async def _persist_job_results(job_id: int, status: str) -> None:
@@ -198,8 +209,26 @@ async def _persist_job_results(job_id: int, status: str) -> None:
         await session.commit()
 
     progress["status"] = status
-    progress["progress"] = 100.0
+    if status == "completed":
+        progress["progress"] = 100.0
     progress["repeat_enabled"] = False
+
+
+async def stop_send_job(job_id: int, user_id: int) -> dict | None:
+    """Request a graceful stop; the sender finishes no further photos after its current call."""
+    async with AsyncSessionLocal() as session:
+        job = await session.get(SendJob, job_id)
+        if job is None or job.user_id != user_id:
+            return None
+        if job.status in {"completed", "failed", "cancelled"}:
+            return await get_job_payload(job_id, user_id)
+
+        job.status = "cancelling"
+        await session.commit()
+
+    progress = JOB_PROGRESS.setdefault(job_id, {})
+    progress.update({"cancel_requested": True, "status": "cancelling", "repeat_enabled": False})
+    return await get_job_payload(job_id, user_id)
 
 
 async def get_job_payload(job_id: int, user_id: int) -> dict | None:
@@ -230,6 +259,8 @@ async def get_job_payload(job_id: int, user_id: int) -> dict | None:
         "progress": progress,
         "repeat_enabled": bool(live.get("repeat_enabled", False)),
         "repeat_remaining_seconds": repeat_remaining_seconds,
+        "target_name": live.get("target_name"),
+        "device_id": live.get("device_id"),
         "results": results,
         "created_at": job.created_at,
         "finished_at": job.finished_at,

@@ -59,5 +59,18 @@ export type SendJob = {
   progress: number;
   repeat_enabled: boolean;
   repeat_remaining_seconds?: number | null;
+  target_name?: string | null;
+  device_id?: string | null;
   results?: SendResult[];
+};
+
+export type BatchTarget = {
+  id: string;
+  name: string;
+  device_name: string;
+  settings: DeviceSettings;
+};
+
+export type BatchSendResponse = {
+  jobs: SendJob[];
 };

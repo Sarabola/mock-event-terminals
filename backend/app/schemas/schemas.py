@@ -105,11 +105,23 @@ class SendJobRead(BaseModel):
     progress: float
     repeat_enabled: bool = False
     repeat_remaining_seconds: float | None = None
+    target_name: str | None = None
+    device_id: str | None = None
 
 
 class SendStartRequest(BaseModel):
     repeat_enabled: bool = False
     repeat_minutes: float | None = Field(default=None, gt=0, le=24 * 60)
+
+
+class BatchSendTarget(BaseModel):
+    name: str = Field(min_length=1, max_length=128)
+    device_name: str = Field(min_length=1, max_length=64)
+    settings: DeviceSettingsUpdate
+
+
+class BatchSendRequest(SendStartRequest):
+    targets: list[BatchSendTarget] = Field(min_length=1, max_length=30)
 
 
 class SendResultRead(BaseModel):
@@ -124,6 +136,10 @@ class SendJobDetail(SendJobRead):
     results: list[SendResultRead]
     created_at: datetime | None = None
     finished_at: datetime | None = None
+
+
+class BatchSendStartResponse(BaseModel):
+    jobs: list[SendJobRead]
 
 
 class CardEventRequest(BaseModel):
