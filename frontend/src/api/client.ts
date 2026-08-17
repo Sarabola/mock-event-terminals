@@ -11,7 +11,10 @@ import type {
   User
 } from "../types/domain";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const API_BASE = configuredApiBase.includes("://localhost") && !["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? "/api"
+  : configuredApiBase;
 const TOKEN_KEY = "mock-terminal-token";
 
 export function getStoredToken(): string | null {
